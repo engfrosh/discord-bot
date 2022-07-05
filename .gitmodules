@@ -1,0 +1,3 @@
+[submodule "common_models"]
+	path = common_models
+	url = https://github.com/engfrosh/common_models.git
