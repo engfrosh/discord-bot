@@ -2,7 +2,7 @@ from common_models.common_modules_setup import init_django
 
 DEFAULT_DATABASE = {
     "ENGINE": "django.db.backends.postgresql_psycopg2",
-    "NAME": "engfrosh_dev_2022_07_01",
+    "NAME": "engfrosh_dev_2022_07_05",
     "USER": "engfrosh_bot",
     "PASSWORD": "there-exercise-fenegle",
     "HOST": "localhost",
