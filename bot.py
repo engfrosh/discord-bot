@@ -5,8 +5,10 @@ import logging
 import os
 from logging.handlers import RotatingFileHandler
 import sys
-
+import json
 import yaml
+
+from common_models import models
 
 CURRENT_DIRECTORY = os.path.dirname(__file__)
 DEFAULT_LOG_LEVEL = logging.DEBUG
@@ -107,3 +109,9 @@ logger.info("test")
 logger.warning("test")
 logger.error("test")
 logger.critical("test")
+
+if "credentials" in config:
+    with open(config["credentials"]) as f:
+        credentials = json.load(f)
+else:
+    raise Exception("No 'credentials' file provided in config files.")

@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "manage.py",
+            "type": "python",
+            "request": "launch",
+            "module": "manage",
+            "justMyCode": true
+        },
+        {
             "name": "Discord Bot: Dev",
             "type": "python",
             "request": "launch",
