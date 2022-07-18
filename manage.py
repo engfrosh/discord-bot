@@ -1,4 +1,4 @@
-from common_models.common_modules_setup import init_django
+from common_models.common_models_setup import init_django
 
 DEFAULT_DATABASE = {
     "ENGINE": "django.db.backends.postgresql_psycopg2",
@@ -9,7 +9,7 @@ DEFAULT_DATABASE = {
     "PORT": "5432",
 }
 
-INSTALLED_APPS = ['common_models', ]
+INSTALLED_APPS = ['django.contrib.auth', 'django.contrib.contenttypes', 'common_models.apps.CommonModelsConfig', ]
 
 if __name__ == "__main__":
     from django.core.management import execute_from_command_line
