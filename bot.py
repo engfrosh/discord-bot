@@ -1,5 +1,7 @@
 from typing import Dict
+
 import nextcord
+import nextcord.ext.commands
 
 import logging
 import os
@@ -7,6 +9,8 @@ from logging.handlers import RotatingFileHandler
 import sys
 import json
 import yaml
+
+from EngFroshBot import EngFroshBot
 
 from common_models import models
 
@@ -110,8 +114,25 @@ logger.warning("test")
 logger.error("test")
 logger.critical("test")
 
+# region Load Credentials
 if "credentials" in config:
     with open(config["credentials"]) as f:
         credentials = json.load(f)
 else:
     raise Exception("No 'credentials' file provided in config files.")
+
+logger.info(credentials)
+
+# endregion
+
+# region Client Setup
+client = EngFroshBot(command_prefix="!", config=config, log_channels=config["log_channels"])
+
+# endregion
+
+# region Load COGs
+for cog in config["cogs"]:
+    client.load_extension(cog)
+    client.debug(f"Cog {cog} loaded")
+
+# endregion

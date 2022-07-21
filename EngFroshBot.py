@@ -1,10 +1,12 @@
 """Discord Bot Client with EngFrosh specific features."""
 
+from __future__ import annotations
+import asyncio
+
 import io
-from typing import Iterable, Optional
-import discord
-from discord.ext import commands
-from engfrosh_common.DatabaseInterface import DatabaseInterface
+from typing import Any, Dict, Iterable, Optional, Set
+import nextcord
+from nextcord.ext import commands
 import logging
 import datetime as dt
 import traceback
@@ -22,21 +24,23 @@ LOG_LEVELS = {
 
 
 class EngFroshBot(commands.Bot):
-    """Discord Bot Client with additional properties including config and database support."""
+    """Discord Bot Client with additional properties including config and error logging."""
 
-    def __init__(self, command_prefix, db_int: DatabaseInterface,
-                 config: dict, help_command=None, description=None, log_channels=[], **options):
-        self.db_int = db_int
+    def __init__(self, command_prefix: str, config: Dict[str, Any],
+                 help_command: Optional[str] = None, description: Optional[str] = None,
+                 log_channels: Optional[Iterable[int]] = [],
+                 **options):
         self.config = config
         if "debug" in config and config["debug"]:
-            self.debug = True
+            self.is_debug = True
         else:
-            self.debug = False
+            self.is_debug = False
         self.log_channels = log_channels
+        self.background_tasks: Set[asyncio.Task] = set()
         super().__init__(command_prefix, description=description, **options)
 
     async def send_to_all(self, message: str, channels: Iterable[int], *,
-                          purge_first: bool = False, file: Optional[discord.File] = None) -> bool:
+                          purge_first: bool = False, file: Optional[nextcord.File] = None) -> bool:
         """Sends message to all channels with given ids."""
         res = True
         for chid in channels:
@@ -50,21 +54,25 @@ class EngFroshBot(commands.Bot):
 
         return res
 
-    async def log(self, message: str, level: str = "INFO", exc_info=None):
-        """Log a message to the bot channels and the logger."""
-
-        # Print to console
-        print(f"\n{level}: {message}")
+    async def _log(self, message: str, level: str = "INFO", exc_info=None) -> None:
+        """Handler for logging to bot channel"""
 
         # Send to log channels
         content = f"\n{level} {dt.datetime.now().isoformat()}: {message}\n"
         if len(content) >= 1900:
             fp = io.StringIO(content)
-            file = discord.File(fp, f"{dt.datetime.now().isoformat()}.log")
+            file = nextcord.File(fp, f"{dt.datetime.now().isoformat()}.log")
             await self.send_to_all("", self.log_channels, file=file)
 
         else:
             await self.send_to_all(f"```{content}```", self.log_channels)
+
+    def log(self, message: str, level: str = "INFO", exc_info=None, *, print_to_console=False):
+        """Log a message to the console, the logger, and the bot channels."""
+
+        # Print to console
+        if print_to_console:
+            print(f"\n{level}: {message}")
 
         # Python Logger
         level = level.upper()
@@ -78,27 +86,28 @@ class EngFroshBot(commands.Bot):
 
         logger.log(level_number, message, exc_info=exc_info)
 
+        # Send to log channels
+        log_task = asyncio.create_task(self._log(message, level, exc_info=exc_info))
+        self.background_tasks.add(log_task)
+        log_task.add_done_callback(self.background_tasks.discard)
+
     async def on_error(self, event_method, *args, **kwargs):
         msg = f'Ignoring exception in {event_method}\n{traceback.format_exc()}'
-        await self.log(msg, "EXCEPTION")
+        self.log(msg, "EXCEPTION")
 
     async def on_command_error(self, context, exception):
-        # if self.extra_events.get('on_command_error', None):
-        #     return
-
-        # if hasattr(context.command, 'on_error'):
-        #     return
-
-        # cog = context.cog
-        # if cog and commands.Cog._get_overridden_method(cog.cog_command_error) is not None:
-        #     return
-
         trace = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
         msg = f'Ignoring exception in command {context.command}:\n{trace}'
-        await self.log(msg, "EXCEPTION")
+        self.log(msg, "EXCEPTION")
 
-    async def error(self, message, *, exc_info=None):
-        await self.log(message, "ERROR", exc_info=exc_info)
+    def error(self, message, *, exc_info=None, **kwargs):
+        self.log(message, "ERROR", exc_info=exc_info, **kwargs)
 
-    async def warning(self, message, *, exc_info=None):
-        await self.log(message, "WARNING", exc_info=exc_info)
+    def warning(self, message, *, exc_info=None, **kwargs):
+        self.log(message, "WARNING", exc_info=exc_info, **kwargs)
+
+    def info(self, message, *, exc_info=None, **kwargs):
+        self.log(message, "INFO", exc_info=exc_info, **kwargs)
+
+    def debug(self, message, *, exc_info=None, **kwargs):
+        self.log(message, "DEBUG", exc_info=exc_info, **kwargs)

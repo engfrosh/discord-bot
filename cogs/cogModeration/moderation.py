@@ -75,7 +75,7 @@ class Moderation(commands.Cog):
 
         if ctx.channel.id in self.config["ignored_channels"]:
             try:
-                if self.bot.debug:
+                if self.bot.is_debug:
                     await ctx.add_reaction("🟨")
             except NotFound:
                 pass
@@ -108,7 +108,7 @@ class Moderation(commands.Cog):
         else:
             logger.debug(f"Allowed message: {message}")
             try:
-                if self.bot.debug:
+                if self.bot.is_debug:
                     await ctx.add_reaction("☑")
             except NotFound:
                 pass

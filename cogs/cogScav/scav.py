@@ -210,7 +210,7 @@ class Scav(commands.Cog):
     async def guess(self, ctx: commands.Context, guess: str):
         """Make a guess of the answer to the current scav question."""
 
-        if self.bot.debug:
+        if self.bot.is_debug:
             await ctx.message.add_reaction("🔄")
 
         allowed = await self.scav_user_allowed(ctx)
@@ -242,7 +242,7 @@ class Scav(commands.Cog):
                 pass
             return
 
-        if self.bot.debug:
+        if self.bot.is_debug:
             try:
                 await ctx.message.add_reaction("✅")
             except NotFound:
@@ -268,7 +268,7 @@ class Scav(commands.Cog):
     async def question(self, ctx: commands.Context):
         """Get questions for current scavenger channel."""
         # TODO check if it is a scav channel
-        if self.bot.debug:
+        if self.bot.is_debug:
             await ctx.message.add_reaction("🔄")
 
         try:
@@ -338,7 +338,7 @@ class Scav(commands.Cog):
     async def hint(self, ctx: commands.Context):
         """Request hint for the question."""
 
-        if self.bot.debug:
+        if self.bot.is_debug:
             await ctx.message.add_reaction("🔄")
 
         allowed = await self.scav_user_allowed(ctx)
