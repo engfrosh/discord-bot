@@ -12,7 +12,6 @@ import yaml
 
 from EngFroshBot import EngFroshBot
 
-from common_models import models
 
 CURRENT_DIRECTORY = os.path.dirname(__file__)
 DEFAULT_LOG_LEVEL = logging.DEBUG
@@ -107,12 +106,6 @@ if "log_level" in config:
     logger.info(f"Set stream log level to: {config['log_level'].upper()}")
 
 # endregion
-
-logger.debug("test")
-logger.info("test")
-logger.warning("test")
-logger.error("test")
-logger.critical("test")
 
 # region Load Credentials
 if "credentials" in config:
