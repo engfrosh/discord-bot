@@ -136,3 +136,17 @@ for cog in config["cogs"]:
     client.debug(f"Cog {cog} loaded")
 
 # endregion
+
+# region On Ready
+
+
+@client.event
+async def on_ready():
+    """Runs on client start"""
+
+    client.info(f"Logged on as {client.user}")
+    await client.change_presence(activity=nextcord.Game(name="Hi There!", type=1, url="engfrosh.com"))
+
+# endregion
+
+client.run(credentials["bot_token"])
