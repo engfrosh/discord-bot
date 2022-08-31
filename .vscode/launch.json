@@ -18,7 +18,8 @@
             "module": "bot",
             "justMyCode": true,
             "env": {
-                "ENGFROSH_DEPLOY_TYPE": "DEV"
+                "ENGFROSH_DEPLOY_TYPE": "DEV",
+                "DISCORD_BOT_TOKEN": ""
             }
         },
         {
@@ -28,7 +29,8 @@
             "module": "bot",
             "justMyCode": true,
             "env": {
-                "ENGFROSH_DEPLOY_TYPE": "PROD"
+                "ENGFROSH_DEPLOY_TYPE": "PROD",
+                "DISCORD_BOT_TOKEN": ""
             }
         }
     ]

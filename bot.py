@@ -62,7 +62,7 @@ logging.getLogger().addHandler(stream_handler)
 
 # endregion
 
-# region Environment Variable & Deployment Type
+# region Environment Variable, Deployment Type, and Bot Token
 deploy_type = os.environ.get("ENGFROSH_DEPLOY_TYPE")
 development = False
 production = False
@@ -76,6 +76,8 @@ elif deploy_type == "PROD":
     production = True
 else:
     logger.warning(f"UNKNOWN DEPLOYMENT TYPE: {deploy_type}")
+
+bot_token = os.environ.get("DISCORD_BOT_TOKEN")
 
 # endregion
 
@@ -107,16 +109,6 @@ if "log_level" in config:
 
 # endregion
 
-# region Load Credentials
-if "credentials" in config:
-    with open(config["credentials"]) as f:
-        credentials = json.load(f)
-else:
-    raise Exception("No 'credentials' file provided in config files.")
-
-logger.info(credentials)
-
-# endregion
 
 # region Client Setup
 client = EngFroshBot(command_prefix="!", config=config, log_channels=config["log_channels"])
@@ -126,7 +118,7 @@ client = EngFroshBot(command_prefix="!", config=config, log_channels=config["log
 # region Load COGs
 for cog in config["cogs"]:
     client.load_extension(cog)
-    client.debug(f"Cog {cog} loaded")
+    client.info(f"Cog {cog} loaded", send_to_discord=False)
 
 # endregion
 
@@ -138,8 +130,7 @@ async def on_ready():
     """Runs on client start"""
 
     client.info(f"Logged on as {client.user}")
-    await client.change_presence(activity=nextcord.Game(name="Hi There!", type=1, url="engfrosh.com"))
+    await client.change_presence(activity=nextcord.Game(name="Welcome to EngFrosh!", type=1, url="mars.engfrosh.com"))
 
 # endregion
-
-client.run(credentials["bot_token"])
+client.run(bot_token)

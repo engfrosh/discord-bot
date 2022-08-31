@@ -67,7 +67,7 @@ class EngFroshBot(commands.Bot):
         else:
             await self.send_to_all(f"```{content}```", self.log_channels)
 
-    def log(self, message: str, level: str = "INFO", exc_info=None, *, print_to_console=False):
+    def log(self, message: str, level: str = "INFO", exc_info=None, *, print_to_console=False, send_to_discord=True):
         """Log a message to the console, the logger, and the bot channels."""
 
         # Print to console
@@ -87,9 +87,13 @@ class EngFroshBot(commands.Bot):
         logger.log(level_number, message, exc_info=exc_info)
 
         # Send to log channels
-        log_task = asyncio.create_task(self._log(message, level, exc_info=exc_info))
-        self.background_tasks.add(log_task)
-        log_task.add_done_callback(self.background_tasks.discard)
+        if send_to_discord:
+            try:
+                log_task = asyncio.create_task(self._log(message, level, exc_info=exc_info))
+                self.background_tasks.add(log_task)
+                log_task.add_done_callback(self.background_tasks.discard)
+            except RuntimeError as e:
+                self.error("Logging Error: No running event loop, you probably need to set send_to_discord=False", exc_info=e, send_to_discord=False)
 
     async def on_error(self, event_method, *args, **kwargs):
         msg = f'Ignoring exception in {event_method}\n{traceback.format_exc()}'
