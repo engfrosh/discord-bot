@@ -18,17 +18,16 @@ class Management(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
 
-    # @slash_command(name="purge", description="Purge all messages from this channel.")
-    # async def slash_purge_channel(self, interaction: Interaction):
-    #     # TODO add check that user is allowed to purge
+    @slash_command(name="purge", description="Purge all messages from this channel.", dm_permission=False,
+                   default_member_permissions=8)
+    async def slash_purge_channel(self, interaction: Interaction):
 
-    #     if isinstance(interaction.channel, nextcord.TextChannel):
-    #         await interaction.response.defer(ephemeral=True, with_message=True)
-    #         await interaction.channel.purge()
-    #         interaction.followup.edit_message(interaction.response.)
-    #         await interaction.response.edit_message(content="Channel Purged")
-    #     else:
-    #         await interaction.response.send_message("Sorry, cannot purge this channel.", ephemeral=True)
+        if isinstance(interaction.channel, nextcord.TextChannel):
+            await interaction.response.defer(ephemeral=True, with_message=True)
+            await interaction.channel.purge()
+            await interaction.send(content="Channel Purged", ephemeral=True)
+        else:
+            await interaction.response.send_message("Sorry, cannot purge this channel.", ephemeral=True)
 
 
 def setup(bot):
