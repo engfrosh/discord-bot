@@ -26,7 +26,7 @@ LOG_LEVELS = {
 class EngFroshBot(commands.Bot):
     """Discord Bot Client with additional properties including config and error logging."""
 
-    def __init__(self, command_prefix: str, config: Dict[str, Any],
+    def __init__(self, config: Dict[str, Any],
                  help_command: Optional[str] = None, description: Optional[str] = None,
                  log_channels: Optional[Iterable[int]] = [],
                  **options):
@@ -37,7 +37,7 @@ class EngFroshBot(commands.Bot):
             self.is_debug = False
         self.log_channels = log_channels
         self.background_tasks: Set[asyncio.Task] = set()
-        super().__init__(command_prefix, description=description, **options)
+        super().__init__(description=description, default_guild_ids = [config['guild']], **options)
 
     async def send_to_all(self, message: str, channels: Iterable[int], *,
                           purge_first: bool = False, file: Optional[nextcord.File] = None) -> bool:

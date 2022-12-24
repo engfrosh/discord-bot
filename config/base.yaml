@@ -2,10 +2,8 @@
 
 log_level: INFO
 
-credentials: credentials.json
-
 debug: false
 
 log_channels: []
 
-cogs: ["cogs.management"]
+cogs: []

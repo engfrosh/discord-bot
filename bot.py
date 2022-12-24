@@ -65,17 +65,18 @@ logging.getLogger().addHandler(stream_handler)
 # region Environment Variable, Deployment Type, and Bot Token
 deploy_type = os.environ.get("ENGFROSH_DEPLOY_TYPE")
 development = False
-production = False
+production = True
 if deploy_type is None:
     logger.warning("ENGFROSH_DEPLOY_TYPE environment variable not set, assuming production.")
 elif deploy_type == "DEV":
     logger.info("DEVELOPMENT DEPLOYMENT VERSION")
     development = True
+    production = False
 elif deploy_type == "PROD":
     logger.info("PRODUCTION DEPLOYMENT VERSION")
     production = True
 else:
-    logger.warning(f"UNKNOWN DEPLOYMENT TYPE: {deploy_type}")
+    logger.error("UNKNOWN DEPLOYMENT VERSION")
 
 bot_token = os.environ.get("DISCORD_BOT_TOKEN")
 
@@ -100,7 +101,6 @@ if production:
         prod_config = yaml.load(f, Loader=yaml.SafeLoader)
         if prod_config:
             config.update(prod_config)
-
 logger.debug(f"Running with configs: {config}")
 
 if "log_level" in config:
@@ -111,12 +111,12 @@ if "log_level" in config:
 
 
 # region Client Setup
-client = EngFroshBot(command_prefix="!", config=config, log_channels=config["log_channels"])
+client = EngFroshBot(config=config, log_channels=config["log_channels"])
 
 # endregion
 
 # region Load COGs
-for cog in config["cogs"]:
+for cog in config["modules"]["cogs"]:
     client.load_extension(cog)
     client.info(f"Cog {cog} loaded", send_to_discord=False)
 
