@@ -12,6 +12,13 @@ import yaml
 
 from EngFroshBot import EngFroshBot
 
+def recursive_update(config: dict, type_config: dict) -> dict:
+    for key, value in type_config.items():
+        if isinstance(value,dict) and config.get(key, None) != None:
+            config[key] = recursive_update(config[key], value)
+        else:
+            config[key] = value
+    return config
 
 CURRENT_DIRECTORY = os.path.dirname(__file__)
 DEFAULT_LOG_LEVEL = logging.DEBUG
@@ -94,13 +101,13 @@ if development:
     with open(DEV_CONFIG_FILE) as f:
         dev_config = yaml.load(f, Loader=yaml.SafeLoader)
         if dev_config:
-            config.update(dev_config)
+            config = recursive_update(config,dev_config)
 
 if production:
     with open(PROD_CONFIG_FILE) as f:
         prod_config = yaml.load(f, Loader=yaml.SafeLoader)
         if prod_config:
-            config.update(prod_config)
+            config = recursive_update(config,prod_config)
 logger.debug(f"Running with configs: {config}")
 
 if "log_level" in config:
@@ -111,7 +118,7 @@ if "log_level" in config:
 
 
 # region Client Setup
-client = EngFroshBot(config=config, log_channels=config["log_channels"])
+client = EngFroshBot(config=config, log_channels=config["bot_log_channel"])
 
 # endregion
 

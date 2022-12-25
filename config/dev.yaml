@@ -1,78 +1,30 @@
 # These settings are only for settings that will not need to be changed while running
 
-modules:
-  # Which modules to import and use
-  rabbitmq: False
-  postgres: True
-  # Warning, lots of functionality will fail if not using a postgres database.
-
-  cogs: [
-    #"cogs.cogModeration.moderation",
-    #"cogs.cogCoin.coin",
-    #"cogs.cogScav.scav",
-    "cogs.cogManagement.management"
-    ]
-
 debug: True
 log_level: INFO
 
 bot_log_channel: [
-  807100215651074109
+  1055928555814531142
 ]
-
-timezone: America/Toronto
-
-media_root: "files/media"
-temp_root: "files/temp"
 
 guild: 374872527710978048
 
 module_settings:
-  rabbitmq:
-    host: localhost
-    queue: django_discord
-
   moderation:
-    checkmark: True
-    reply:
-      channel: True
-      dm: True
-
     ignored_channels: [
-      858741004831555634
+      1056676526130729050
     ]
     report_channels: [
-      858741004831555634
+      1056676513363263499
     ]
-    additional_words: [
-      "uottawa"
-    ]
-
-    report_message: "{author} sent a message to channel {channel} that broke the moderation rules:\n\n||{content}||"
-    profanity_message: "Your message is not appropriate. It has been deleted from the channel and sent to the moderation team."
-
   coin:
-    public_commands: True
-    public_confirmations: True
-    permission: change_team_coin # Names must be unique as currently written
-
-    scoreboard_channels: [
-      813043254358442034
-    ]
-
-    scoreboard:
-      header: "Scoin Standings\n=================="
-      row: "{place}. {team_name} {coin_amount}"
-      # row must contain format placeholders: place, team_name, coin_amount
-      name_length: 25
-      coin_length: 10
-
-  scav:
-    incorrect_message: Null
-
-    settings_names:
-      active: "scav_active"
-
+    scoreboard_channel: 1056676601837928468
   management:
-    superadmin: [264989719312465921]
-
+    pronoun_message: [1056677268761624646]
+    bingo_message: [1056676731399966771]
+    virtual_team_message: [1056677724288204900]
+    pronouns:
+      he: 1055519324913274900
+      she: 1055519324913274900
+      they: 1055519324913274900
+      ask: 1055519324913274900

@@ -66,7 +66,6 @@ class Management(commands.Cog):
             if not guild:
                 await self.bot.error(f"Could not get guild {self.bot.config['guild']}")
                 return
-
             if emoji.name == "1️⃣":
                 role = guild.get_role(self.config["pronouns"]["he"])
                 await member.add_roles(role)

@@ -1,7 +1,9 @@
 import logging
-from discord.ext import commands
-from ...EngFroshBot import EngFroshBot
-
+from nextcord.ext import commands, application_checks
+from nextcord import slash_command, Interaction
+from EngFroshBot import EngFroshBot
+from common_models.models import Team
+from asgiref.sync import sync_to_async
 
 logger = logging.getLogger("Cogs.Coin")
 
@@ -9,45 +11,38 @@ logger = logging.getLogger("Cogs.Coin")
 class Coin(commands.Cog):
     def __init__(self, bot: EngFroshBot) -> None:
         self.bot = bot
-        self.db = bot.db_int
         self.config = bot.config["module_settings"]["coin"]
 
-    @commands.command()
-    async def coin(self, ctx: commands.Context, team, amount):
+    @slash_command(name="set_coin", description="Changes a team's coin value",
+                    dm_permission=False, default_member_permissions=8)
+    @application_checks.has_permissions(administrator=True)
+    async def coin(self, i: Interaction, team, amount):
         """Change team's coin: coin [team] [amount]"""
-        allowed = await self.db.check_user_has_permission(discord_id=ctx.author.id,
-                                                          permission_name=self.config["permission"])
-        if not allowed:
-            await ctx.message.reply("Sorry, you don't have the permission to do that.")
-            return
-
-        if not self.config["public_commands"]:
-            await ctx.message.delete()
-
-        team_id = await self.bot.db_int.get_frosh_team_id(team_name=team)
-
-        if not team_id:
-            await ctx.author.send(f"Sorry, no team called {team}, please try again.")
-            return
-
-        res = await self.bot.db_int.update_coin_amount(int(amount), group_id=team_id)
+        res = await sync_to_async(self.update_coin_amount)(int(amount), team)
 
         if res:
-            display_name = await self.bot.db_int.get_team_display_name(team_id)
             # TODO change so it sends to that team's update channel
-            await ctx.channel.send(f"{display_name} You got {amount} scoin!")
-            await self.update_coin_board()
+            await i.send(f"{team} You got {amount} scoin!")
+            await self.update_coin_board(i)
         else:
-            logger.error("Could not add coin.")
-            await ctx.author.send(f"Setting coin for team: {team} failed.")
-
-    async def update_coin_board(self):
+            await i.send(f"Sorry, no team called {team}, please try again.", ephemeral=True)
+    def update_coin_amount(self, amount, team):
+        teams = Team.objects.filter(display_name__iexact=team)
+        team_data = teams.first()
+        if team_data == None:
+            return False
+        team_data.coin_amount=amount
+        team_data.save()
+        return True
+    def get_all_frosh_teams(self):
+        return list(Team.objects.all())
+    async def update_coin_board(self, i: Interaction):
         """Update the coin standings channel."""
 
         logger.debug("Updating coin board...")
-        teams = await self.bot.db_int.get_all_frosh_teams()
+        teams = await sync_to_async(self.get_all_frosh_teams)()
 
-        teams.sort(key=lambda team: team.coin, reverse=True)
+        teams.sort(key=lambda team: team.coin_amount, reverse=True)
 
         msg = f"```\n{self.config['scoreboard']['header']}\n"
         name_padding = self.config['scoreboard']['name_length']
@@ -60,8 +55,8 @@ class Coin(commands.Cog):
         for team in teams:
             s = f"{self.config['scoreboard']['row']}\n"
 
-            team_name = team.name
-            coin_amount = team.coin
+            team_name = team.display_name
+            coin_amount = team.coin_amount
 
             if coin_amount == cur_coin:
                 # If there is a tie
@@ -79,9 +74,9 @@ class Coin(commands.Cog):
         msg += "```"
 
         logger.debug(f"Got coin message: {msg}")
-        channels = self.config["scoreboard_channels"]
-        logger.debug(f"Sending to: {channels}")
-        await self.bot.send_to_all(msg, channels, purge_first=True)
+        channel = self.config["scoreboard_channel"]
+        logger.debug(f"Sending to: {channel}")
+        await i.guild.get_channel(channel).send(msg)
 
 
 def setup(bot):

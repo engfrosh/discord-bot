@@ -1,78 +1,23 @@
 # These settings are only for settings that will not need to be changed while running
 
-modules:
-  # Which modules to import and use
-  rabbitmq: True
-  postgres: True
-  # Warning, lots of functionality will fail if not using a postgres database.
-
-  cogs: [
-    #"cogs.cogModeration.moderation",
-    #"cogs.cogCoin.coin",
-    #"cogs.cogScav.scav",
-    "cogs.cogManagement.management"
-    ]
-
-debug: False
-log_level: WARN
-
 bot_log_channel: [
   807100215651074109
 ]
 
 guild: 1045045050935083029
 
-timezone: America/Toronto
-
-media_root: "files/media"
-temp_root: "files/temp"
-
 module_settings:
-  rabbitmq:
-    host: localhost
-    queue: django_discord
-
   moderation:
-    checkmark: True
-    reply:
-      channel: True
-      dm: True
-
     ignored_channels: [
       858741004831555634
     ]
     report_channels: [
       858741004831555634
     ]
-    additional_words: [
-      "uottawa"
-    ]
-
-    report_message: "{author} sent a message to channel {channel} that broke the moderation rules:\n\n||{content}||"
-    profanity_message: "Your message is not appropriate. It has been deleted from the channel and sent to the moderation team."
-
   coin:
-    public_commands: True
-    public_confirmations: True
-    permission: change_team_coin # Names must be unique as currently written
-
-    scoreboard_channels: [
-      813043254358442034
-    ]
-
-    scoreboard:
-      header: "Scoin Standings\n=================="
-      row: "{place}. {team_name} {coin_amount}"
-      # row must contain format placeholders: place, team_name, coin_amount
-      name_length: 25
-      coin_length: 10
-
-  scav:
-    incorrect_message: Null
-
-    settings_names:
-      active: "scav_active"
-
+    scoreboard_channel: 813043254358442034
   management:
-    superadmin: [360895010494742529]
+      pronoun_message: [1056677268761624646]
+      bingo_message: [1056676731399966771]
+      virtual_team_message: [1056677724288204900]
 
