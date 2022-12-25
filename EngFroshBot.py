@@ -28,31 +28,16 @@ class EngFroshBot(commands.Bot):
 
     def __init__(self, config: Dict[str, Any],
                  help_command: Optional[str] = None, description: Optional[str] = None,
-                 log_channels: Optional[Iterable[int]] = [],
+                 log_channel: Optional[Iterable[int]] = [],
                  **options):
         self.config = config
         if "debug" in config and config["debug"]:
             self.is_debug = True
         else:
             self.is_debug = False
-        self.log_channels = log_channels
+        self.log_channel = log_channel
         self.background_tasks: Set[asyncio.Task] = set()
         super().__init__(description=description, default_guild_ids = [config['guild']], **options)
-
-    async def send_to_all(self, message: str, channels: Iterable[int], *,
-                          purge_first: bool = False, file: Optional[nextcord.File] = None) -> bool:
-        """Sends message to all channels with given ids."""
-        res = True
-        for chid in channels:
-            if channel := self.get_channel(chid):
-                if purge_first:
-                    await channel.purge()
-                await channel.send(message, file=file)
-            else:
-                logger.error(f"Could not get channel with id: {chid}")
-                res = False
-
-        return res
 
     async def _log(self, message: str, level: str = "INFO", exc_info=None) -> None:
         """Handler for logging to bot channel"""
@@ -62,10 +47,10 @@ class EngFroshBot(commands.Bot):
         if len(content) >= 1900:
             fp = io.StringIO(content)
             file = nextcord.File(fp, f"{dt.datetime.now().isoformat()}.log")
-            await self.send_to_all("", self.log_channels, file=file)
+            await self.get_guild(self.config['guild']).get_channel(self.log_channel).send(file=file)
 
         else:
-            await self.send_to_all(f"```{content}```", self.log_channels)
+            await self.get_guild(self.config['guild']).get_channel(self.log_channel).send(content)
 
     def log(self, message: str, level: str = "INFO", exc_info=None, *, print_to_console=False, send_to_discord=True):
         """Log a message to the console, the logger, and the bot channels."""

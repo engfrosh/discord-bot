@@ -4,12 +4,12 @@ import logging
 import re
 # import confusables
 
-from discord.ext import commands
-from discord import Message
-from discord.errors import NotFound
+import nextcord
+from nextcord.ext import commands, application_checks
+from nextcord import slash_command, Interaction, Message
 from better_profanity import profanity
 import better_profanity.constants
-from ...EngFroshBot import EngFroshBot
+from EngFroshBot import EngFroshBot
 
 logger = logging.getLogger("Cogs.Moderation")
 
@@ -94,7 +94,7 @@ class Moderation(commands.Cog):
             msg = report_form.format(author=f"<@{ctx.author.id}>",
                                      channel=f"<#{ctx.channel.id}>",
                                      content=f"{ctx.content}")
-            await self.bot.send_to_all(msg, self.config['report_channels'])
+            await ctx.guild.get_channel(self.config['report_channel']).send(msg)
 
             # Tell User
             form = self.config['profanity_message']

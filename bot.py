@@ -1,6 +1,7 @@
 from typing import Dict
 
 import nextcord
+from nextcord import Intents
 import nextcord.ext.commands
 
 import logging
@@ -117,8 +118,12 @@ if "log_level" in config:
 # endregion
 
 
+intents = Intents.default()
+intents.message_content = True
+intents.messages = True
+
 # region Client Setup
-client = EngFroshBot(config=config, log_channels=config["bot_log_channel"])
+client = EngFroshBot(config=config, log_channel=config["bot_log_channel"], intents=intents)
 
 # endregion
 

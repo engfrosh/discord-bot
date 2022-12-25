@@ -1,8 +1,6 @@
 # These settings are only for settings that will not need to be changed while running
 
-bot_log_channel: [
-  807100215651074109
-]
+bot_log_channel: 807100215651074109
 
 guild: 1045045050935083029
 
@@ -11,9 +9,7 @@ module_settings:
     ignored_channels: [
       858741004831555634
     ]
-    report_channels: [
-      858741004831555634
-    ]
+    report_channels: 858741004831555634
   coin:
     scoreboard_channel: 813043254358442034
   management:

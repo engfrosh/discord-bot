@@ -3,9 +3,7 @@
 debug: True
 log_level: INFO
 
-bot_log_channel: [
-  1055928555814531142
-]
+bot_log_channel: 1055928555814531142
 
 guild: 374872527710978048
 
@@ -14,9 +12,7 @@ module_settings:
     ignored_channels: [
       1056676526130729050
     ]
-    report_channels: [
-      1056676513363263499
-    ]
+    report_channel: 1056676513363263499
   coin:
     scoreboard_channel: 1056676601837928468
   management:
