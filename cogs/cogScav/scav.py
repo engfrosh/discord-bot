@@ -5,7 +5,8 @@ from typing import Optional, Union
 
 import nextcord
 from nextcord.ext import commands, application_checks
-from nextcord import slash_command, Interaction, Member, SlashOption
+from nextcord import slash_command, Interaction, Member, SlashOption, TextChannel
+from nextcord.ui import View, Button, Item
 from typing import Optional
 
 from common_models.models import *
@@ -22,6 +23,15 @@ import uuid
 
 
 logger = logging.getLogger("Cogs.Scav")
+
+class VerifyButton(Button):
+    def __init__(self,label:str, callback, photo: VerificationPhoto, channel: TextChannel):
+        self.callback_fun = callback
+        self.photo = photo
+        self.channel = channel
+        super().__init__(label=label)
+    async def callback(self, i: Interaction):
+        await self.callback_fun(i,self.photo, self.channel)
 
 class Scav(commands.Cog):
     def __init__(self, bot: EngFroshBot):
@@ -179,7 +189,10 @@ class Scav(commands.Cog):
         if puzzle.require_photo_upload and file is None:
             await i.send("Your guess is correct, however you must attach a verification photo to it when submitting it!")
             return
-
+        elif not puzzle.require_photo_upload:
+            await sync_to_async(activity.mark_completed)()
+            await i.send("Completed scav puzzle")
+            return
         url = file.url
         name = urlparse(url).path.split('/')[-1] # Taken from https://stackoverflow.com/a/42341786
         headers = {
@@ -187,7 +200,7 @@ class Scav(commands.Cog):
         }
         response = requests.get(url, headers=headers)
         if response.status_code != 200:
-            i.send("Failed to open verification image, please resend!",ephemeral=True)
+            await i.send("Failed to open verification image, please resend!",ephemeral=True)
             return
         photo = VerificationPhoto()
         ext = name.split('.')[-1]
@@ -204,8 +217,33 @@ class Scav(commands.Cog):
         await sync_to_async(activity.save)()
         await sync_to_async(activity.mark_completed)()
         
+        sendable_file = await file.to_file()
+
+        verify_channel = i.guild.get_channel(self.config['verify_channel'])
+        view = View()
+        deny = VerifyButton("Deny", self.scav_deny, photo, i.channel)
+        approve = VerifyButton("Approve", self.scav_approve, photo, i.channel)
+        view.add_item(deny)
+        view.add_item(approve)
+
+        await verify_channel.send(f"Team {team.display_name} submitted a photo for approval for question {puzzle.name}", file=sendable_file, view=view)
+        
         await i.send("Completed scav puzzle, please wait for it to be verified!")
-    
+    def get_puzzle_from_photo(self, photo: VerificationPhoto):
+        return TeamPuzzleActivity.objects.filter(verification_photo=photo).first()
+    async def scav_deny(self, i: Interaction, photo: VerificationPhoto, channel: TextChannel):
+        puzzle = await sync_to_async(self.get_puzzle_from_photo)(photo)
+        puzzle.verification_photo = None
+        puzzle.puzzle_completed_at = None
+        await sync_to_async(puzzle.save)()
+        await sync_to_async(photo.delete)()
+        await i.send("Rejected puzzle photo!")
+        await channel.send("Your scav answer has been rejected!")
+
+    async def scav_approve(self, i: Interaction, photo: VerificationPhoto, channel: TextChannel):
+        await sync_to_async(photo.approve)()
+        await i.send("Approved puzzle photo!")
+        await channel.send("Your scav answer has been approved!")
     def get_team_active_puzzles(self, team: Team) -> List[Puzzle]:
         return team.active_puzzles
     @slash_command(name="question", description="Gets the current scav question")
@@ -217,10 +255,10 @@ class Scav(commands.Cog):
         user = await sync_to_async(self.get_user_from_discord)(i.user)
         team = await sync_to_async(self.get_user_team)(user)
         if team == None:
-            i.send("You are not on a team!", ephemeral=True)
+            await i.send("You are not on a team!", ephemeral=True)
             return
         if team.scavenger_finished:
-            i.send("Your team has already completed scav!",ephemeral=True)
+            await i.send("Your team has already completed scav!",ephemeral=True)
             return
 
         puzzles = await sync_to_async(self.get_team_active_puzzles)(team)

@@ -18,4 +18,9 @@ module_settings:
       pronoun_message: [1056677268761624646]
       bingo_message: [1056676731399966771]
       virtual_team_message: [1056677724288204900]
+  scav:
+    team_channels: [
+        1056696565533786162
+    ]
+    verify_channel: 1056976121612210306
 
