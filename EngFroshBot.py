@@ -22,6 +22,8 @@ LOG_LEVELS = {
     "NOTSET": 0
 }
 
+instance = None
+
 
 class EngFroshBot(commands.Bot):
     """Discord Bot Client with additional properties including config and error logging."""
@@ -37,7 +39,8 @@ class EngFroshBot(commands.Bot):
             self.is_debug = False
         self.log_channel = log_channel
         self.background_tasks: Set[asyncio.Task] = set()
-        super().__init__(description=description, default_guild_ids = [config['guild']], **options)
+        self.admin_role = config['admin_role']
+        super().__init__(description=description, default_guild_ids=[config['guild']], **options)
 
     async def _log(self, message: str, level: str = "INFO", exc_info=None) -> None:
         """Handler for logging to bot channel"""
@@ -78,7 +81,8 @@ class EngFroshBot(commands.Bot):
                 self.background_tasks.add(log_task)
                 log_task.add_done_callback(self.background_tasks.discard)
             except RuntimeError as e:
-                self.error("Logging Error: No running event loop, you probably need to set send_to_discord=False", exc_info=e, send_to_discord=False)
+                self.error("Logging Error: No running event loop, you probably need to set send_to_discord=False",
+                           exc_info=e, send_to_discord=False)
 
     async def on_error(self, event_method, *args, **kwargs):
         msg = f'Ignoring exception in {event_method}\n{traceback.format_exc()}'

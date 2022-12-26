@@ -4,9 +4,8 @@ import logging
 import re
 # import confusables
 
-import nextcord
-from nextcord.ext import commands, application_checks
-from nextcord import slash_command, Interaction, Message
+from nextcord.ext import commands
+from nextcord import Message, NotFound
 from better_profanity import profanity
 import better_profanity.constants
 from EngFroshBot import EngFroshBot
@@ -74,11 +73,8 @@ class Moderation(commands.Cog):
             return
 
         if ctx.channel.id in self.config["ignored_channels"]:
-            try:
-                if self.bot.is_debug:
-                    await ctx.add_reaction("🟨")
-            except NotFound:
-                pass
+            if self.bot.is_debug:
+                await ctx.add_reaction("🟨")
             return
 
         message = ctx.content

@@ -1,17 +1,15 @@
 # region Imports
 import logging
-from typing import Optional, Union
-# import datetime as dt
 
 import nextcord
 from nextcord.ext import commands, application_checks
-from nextcord import slash_command, Interaction, Member, SlashOption, TextChannel
-from nextcord.ui import View, Button, Item
+from nextcord import slash_command, Interaction, Member, SlashOption, TextChannel, NotFound
+from nextcord.ui import View, Button
 from typing import Optional
 
-from common_models.models import *
+from common_models.models import BooleanSetting, VerificationPhoto, Team, UserDetails, DiscordUser, FroshRole
+from common_models.models import Puzzle, TeamPuzzleActivity, PuzzleGuess
 
-from django.db.models import ImageField, FileField
 from django.core.files import File
 
 from EngFroshBot import EngFroshBot
@@ -24,21 +22,28 @@ import uuid
 
 logger = logging.getLogger("Cogs.Scav")
 
+admin_role = EngFroshBot.instance.admin_role
+
+
 class VerifyButton(Button):
-    def __init__(self,label:str, callback, photo: VerificationPhoto, channel: TextChannel):
+    def __init__(self, label: str, callback, photo: VerificationPhoto, channel: TextChannel):
         self.callback_fun = callback
         self.photo = photo
         self.channel = channel
         super().__init__(label=label)
+
     async def callback(self, i: Interaction):
-        await self.callback_fun(i,self.photo, self.channel)
+        await self.callback_fun(i, self.photo, self.channel)
+
 
 class Scav(commands.Cog):
     def __init__(self, bot: EngFroshBot):
         self.bot = bot
         self.config = bot.config["module_settings"]["scav"]
+
     def check_scavenger_setting_enabled(self):
         return BooleanSetting.objects.filter(id="SCAVENGER_ENABLED").first()
+
     async def scav_enabled(self):
         return await sync_to_async(self.check_scavenger_setting_enabled)()
 
@@ -53,6 +58,7 @@ class Scav(commands.Cog):
 
     def get_all_scav_teams(self):
         return list(Team.objects.filter(scavenger_enabled_for_team=True))
+
     async def update_scoreboard(self):
         """Update the scoreboard channel with the current standings."""
 
@@ -85,31 +91,35 @@ class Scav(commands.Cog):
         await self.bot.send_to_all(msg, channels, purge_first=True)
 
     def get_user_from_discord(self, author: Member):
-        user = DiscordUser.objects.filter(discord_username=author.name,discriminator=author.discriminator).first()
-        if user == None:
+        user = DiscordUser.objects.filter(discord_username=author.name, discriminator=author.discriminator).first()
+        if user is None:
             return None
         return UserDetails.objects.filter(user=user.user).first()
+
     def get_user_team(self, user: UserDetails):
         frosh_groups = FroshRole.objects.all()
         names = []
         for g in frosh_groups:
             names += [g.name]
         team = user.user.groups.exclude(name__in=names).first()
-        if team == None:
+        if team is None:
             return None
         return Team.objects.filter(group=team).first()
+
     def get_user_role(self, user: UserDetails):
         frosh_groups = FroshRole.objects.all()
         names = []
         for g in frosh_groups:
             names += [g.name]
         role = user.user.groups.filter(name__in=names).first()
-        if role == None:
+        if role is None:
             return None
         return role.name
+
     def team_scav_enabled(self, team: Team) -> bool:
         # This has to be here because team.scavenger_enabled has the property decorator
         return team.scavenger_enabled
+
     async def scav_user_allowed(self, i: Interaction) -> bool:
         """
         Check if the user and channel are correct and allowed to guess / request a hint,
@@ -117,7 +127,7 @@ class Scav(commands.Cog):
 
         """
 
-        if not i.channel.id in self.config['team_channels']:
+        if i.channel.id not in self.config['team_channels']:
             await i.send("There is no scav team associated with this channel.", ephemeral=True)
             return False
 
@@ -130,7 +140,7 @@ class Scav(commands.Cog):
         team = await sync_to_async(self.get_user_team)(user)
         role = await sync_to_async(self.get_user_role)(user)
         # Guess automatically goes towards their team
-        if team == None:
+        if team is None:
             await i.send("You are not on a team!", ephemeral=True)
             return False
         if not await sync_to_async(self.team_scav_enabled)(team):
@@ -140,14 +150,19 @@ class Scav(commands.Cog):
         if team.scavenger_finished:
             await i.send("You're already finished Scav!", ephemeral=True)
             return False
-
+        if role.name == "Frosh":
+            await i.send("Frosh cannot submit scav answers!", ephemeral=True)
+            return False
         return True
+
     def get_team_puzzle_activity(self, team: Team, puzzle: Puzzle):
-        return TeamPuzzleActivity.objects.filter(team=team,puzzle=puzzle).first()
+        return TeamPuzzleActivity.objects.filter(team=team, puzzle=puzzle).first()
+
     def get_team_active_puzzles(self, team: Team):
         return team.active_puzzles
+
     @slash_command(name="guess", description="Makes a scav guess")
-    async def guess(self, i: Interaction, guess: str, file: Optional[nextcord.Attachment] = SlashOption(required=False)):
+    async def guess(self, i: Interaction, guess: str, file: Optional[nextcord.Attachment] = SlashOption(required=False)):  # noqa: E501
         """Make a guess of the answer to the current scav question."""
 
         allowed = await self.scav_user_allowed(i)
@@ -156,26 +171,26 @@ class Scav(commands.Cog):
 
         user = await sync_to_async(self.get_user_from_discord)(i.user)
         team = await sync_to_async(self.get_user_team)(user)
-        
+
         if team.scavenger_finished:
             i.send("Your team has already finished scav!", ephemeral=True)
             return
 
         puzzles = await sync_to_async(self.get_team_active_puzzles)(team)
         if len(puzzles) != 1:
-            await i.send("Your team has no active puzzles or too many active puzzles!",ephemeral=True)
+            await i.send("Your team has no active puzzles or too many active puzzles!", ephemeral=True)
             return
         puzzle = puzzles[0]
         if not puzzle.enabled:
             team.refresh_scavenger_progress()
-            await i.send("An error occurred, please resubmit. If this continues please contact planning", ephemeral=True)
+            await i.send("An error occurred, please resubmit." +
+                         " If this continues please contact planning", ephemeral=True)
             return
         activity = await sync_to_async(self.get_team_puzzle_activity)(team, puzzle)
         p_guess = PuzzleGuess()
         p_guess.value = guess
         p_guess.activity = activity
         await sync_to_async(p_guess.save)()
-        
 
         if guess.lower() != puzzle.answer.lower():
             try:
@@ -187,36 +202,36 @@ class Scav(commands.Cog):
                 pass
             return
         if puzzle.require_photo_upload and file is None:
-            await i.send("Your guess is correct, however you must attach a verification photo to it when submitting it!")
+            await i.send("Your guess is correct, but you must attach a verification photo to it when submitting it!")
             return
         elif not puzzle.require_photo_upload:
             await sync_to_async(activity.mark_completed)()
             await i.send("Completed scav puzzle")
             return
         url = file.url
-        name = urlparse(url).path.split('/')[-1] # Taken from https://stackoverflow.com/a/42341786
+        name = urlparse(url).path.split('/')[-1]  # Taken from https://stackoverflow.com/a/42341786
         headers = {
-            'User-Agent': self.config['user_agent'], # Have to fake user agent to make requests to discord's cdn
+            'User-Agent': self.config['user_agent'],  # Have to fake user agent to make requests to discord's cdn
         }
         response = requests.get(url, headers=headers)
         if response.status_code != 200:
-            await i.send("Failed to open verification image, please resend!",ephemeral=True)
+            await i.send("Failed to open verification image, please resend!", ephemeral=True)
             return
         photo = VerificationPhoto()
         ext = name.split('.')[-1]
         new_name = str(uuid.uuid4())+'.'+ext
         verify_dir = self.bot.config['verify_dir']
         verify_prefix = self.bot.config['verify_prefix']
-        with open(verify_dir+new_name,"wb") as f:
+        with open(verify_dir + new_name, "wb") as f:
             f.write(response.content)
             f.close()
-        photo.photo.name = verify_prefix+new_name # This https://stackoverflow.com/a/66161155 answer's poster is a literal saint
+        photo.photo.name = verify_prefix + new_name  # https://stackoverflow.com/a/66161155
         await sync_to_async(photo.save)()
 
         activity.verification_photo = photo
         await sync_to_async(activity.save)()
         await sync_to_async(activity.mark_completed)()
-        
+
         sendable_file = await file.to_file()
 
         verify_channel = i.guild.get_channel(self.config['verify_channel'])
@@ -226,11 +241,14 @@ class Scav(commands.Cog):
         view.add_item(deny)
         view.add_item(approve)
 
-        await verify_channel.send(f"Team {team.display_name} submitted a photo for approval for question {puzzle.name}", file=sendable_file, view=view)
-        
+        await verify_channel.send(f"Team {team.display_name} submitted a photo for approval" +
+                                  f" for question {puzzle.name}", file=sendable_file, view=view)
+
         await i.send("Completed scav puzzle, please wait for it to be verified!")
+
     def get_puzzle_from_photo(self, photo: VerificationPhoto):
         return TeamPuzzleActivity.objects.filter(verification_photo=photo).first()
+
     async def scav_deny(self, i: Interaction, photo: VerificationPhoto, channel: TextChannel):
         puzzle = await sync_to_async(self.get_puzzle_from_photo)(photo)
         puzzle.verification_photo = None
@@ -244,49 +262,52 @@ class Scav(commands.Cog):
         await sync_to_async(photo.approve)()
         await i.send("Approved puzzle photo!")
         await channel.send("Your scav answer has been approved!")
-    def get_team_active_puzzles(self, team: Team) -> List[Puzzle]:
-        return team.active_puzzles
+
     @slash_command(name="question", description="Gets the current scav question")
     async def question(self, i: Interaction):
         """Get questions for current scavenger channel."""
-        if not i.channel.id in self.config["team_channels"]:
-            await i.send("This is not a scav channel!",ephemeral=True)
+        if i.channel.id not in self.config["team_channels"]:
+            await i.send("This is not a scav channel!", ephemeral=True)
             return
         user = await sync_to_async(self.get_user_from_discord)(i.user)
         team = await sync_to_async(self.get_user_team)(user)
-        if team == None:
+        if team is None:
             await i.send("You are not on a team!", ephemeral=True)
             return
         if team.scavenger_finished:
-            await i.send("Your team has already completed scav!",ephemeral=True)
+            await i.send("Your team has already completed scav!", ephemeral=True)
             return
 
         puzzles = await sync_to_async(self.get_team_active_puzzles)(team)
         if len(puzzles) != 1:
-            await i.send("Your team has no active puzzles or too many active puzzles!",ephemeral=True)
+            await i.send("Your team has no active puzzles or too many active puzzles!", ephemeral=True)
             return
         puzzle = puzzles[0]
         if not puzzle.enabled:
             team.refresh_scavenger_progress()
-            await i.send("An error occurred, please resubmit. If this continues please contact planning", ephemeral=True)
+            await i.send("An error occurred, please resubmit." +
+                         " If this continues please contact planning", ephemeral=True)
             return
         if puzzle.puzzle_file:
             f = open(puzzle.puzzle_file.path, "rb")
             f_name = puzzle.puzzle_file_display_filename
-            if f_name == None:
+            if f_name is None:
                 f_name = puzzle.puzzle_file.name
-            await i.send(puzzle.puzzle_text, files=File(f,filename=f_name))
+            await i.send(puzzle.puzzle_text, files=File(f, filename=f_name))
         else:
             await i.send(puzzle.puzzle_text)
+
     def get_team_by_name(self, team_name):
         return Team.objects.filter(display_name__iexact=team_name).first()
-    @slash_command(name="scav_lock", description="Lock a team's scav", dm_permission=False, default_member_permissions=8)
-    @application_checks.has_permissions(administrator=True)
+
+    @slash_command(name="scav_lock", description="Lock a team's scav",
+                   dm_permission=False, default_member_permissions=8)
+    @application_checks.has_role(admin_role)
     async def scav_lock(self, i: Interaction, team_name: str, minutes: int = 15):
         """Lock a team's scav"""
 
         team = await sync_to_async(self.get_team_by_name)(team_name)
-        if team == None:
+        if team is None:
             await i.send("Invalid team", ephemeral=True)
             return
         await sync_to_async(team.scavenger_lock)(minutes)
@@ -296,13 +317,14 @@ class Scav(commands.Cog):
     def team_scav_unlock(self, team: Team) -> None:
         team.scavenger_unlock
 
-    @slash_command(name="scav_unlock", description="Unlock a team's scav", dm_permission=False, default_member_permissions=8)
-    @application_checks.has_permissions(administrator=True)
+    @slash_command(name="scav_unlock", description="Unlock a team's scav",
+                   dm_permission=False, default_member_permissions=8)
+    @application_checks.has_role(admin_role)
     async def scav_unlock(self, i: Interaction, team_name: str):
         """Unlock a team's scav"""
 
         team = await sync_to_async(self.get_team_by_name)(team_name)
-        if team == None:
+        if team is None:
             await i.send("Invalid team", ephemeral=True)
             return
 
@@ -316,17 +338,17 @@ class Scav(commands.Cog):
 
         user = await sync_to_async(self.get_user_from_discord)(i.user)
         team = await sync_to_async(self.get_user_team)(user)
-        if team == None:
+        if team is None:
             await i.send("You are not on a team!", ephemeral=True)
             return
         if team.scavenger_finished:
-            await i.send("Your team has already completed scav!",ephemeral=True)
+            await i.send("Your team has already completed scav!", ephemeral=True)
             return
         await i.send("This is not implemented!", ephemeral=True)
-        #TODO: Implement this
+        # TODO: Implement this
         return
+
 
 def setup(bot):
     bot.add_cog(Scav(bot))
 # endregion
-

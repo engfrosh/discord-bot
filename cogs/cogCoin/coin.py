@@ -7,6 +7,8 @@ from asgiref.sync import sync_to_async
 
 logger = logging.getLogger("Cogs.Coin")
 
+admin_role = EngFroshBot.instance.admin_role
+
 
 class Coin(commands.Cog):
     def __init__(self, bot: EngFroshBot) -> None:
@@ -14,8 +16,8 @@ class Coin(commands.Cog):
         self.config = bot.config["module_settings"]["coin"]
 
     @slash_command(name="set_coin", description="Changes a team's coin value",
-                    dm_permission=False, default_member_permissions=8)
-    @application_checks.has_permissions(administrator=True)
+                   dm_permission=False, default_member_permissions=8)
+    @application_checks.has_role(admin_role)
     async def coin(self, i: Interaction, team, amount):
         """Change team's coin: coin [team] [amount]"""
         res = await sync_to_async(self.update_coin_amount)(int(amount), team)
@@ -26,16 +28,19 @@ class Coin(commands.Cog):
             await self.update_coin_board(i)
         else:
             await i.send(f"Sorry, no team called {team}, please try again.", ephemeral=True)
+
     def update_coin_amount(self, amount, team):
         teams = Team.objects.filter(display_name__iexact=team)
         team_data = teams.first()
-        if team_data == None:
+        if team_data is None:
             return False
-        team_data.coin_amount=amount
+        team_data.coin_amount = amount
         team_data.save()
         return True
+
     def get_all_frosh_teams(self):
         return list(Team.objects.all())
+
     async def update_coin_board(self, i: Interaction):
         """Update the coin standings channel."""
 

@@ -7,6 +7,7 @@ bot_log_channel: 1055928555814531142
 
 verify_dir: '../engfrosh/files/media/verification_photos/'
 
+admin_role: 432167231254691852
 guild: 374872527710978048
 
 module_settings:

@@ -4,19 +4,20 @@ import logging
 import os
 from typing import Optional
 # from typing import List
-import nextcord
 from nextcord.ext import commands, application_checks
-from nextcord import slash_command, Interaction, PermissionOverwrite
+from nextcord import slash_command, Interaction, PermissionOverwrite, TextChannel, File
 from nextcord.utils import get
 import random
 
-from common_models.models import *
+from common_models.models import DiscordVirtualTeam
 
 from EngFroshBot import EngFroshBot
 
 SOOPP_BINGO_PATH = "offline-files/soopp-bingo"
 
 logger = logging.getLogger("CogManagement")
+
+admin_role = EngFroshBot.instance.admin_role
 
 
 class Management(commands.Cog):
@@ -35,12 +36,12 @@ class Management(commands.Cog):
             if os.path.isfile(os.path.join(SOOPP_BINGO_PATH, f))]
 
     @slash_command(name="purge", description="Purge all messages from this channel.",
-                    dm_permission=False, default_member_permissions=8)
-    @application_checks.has_permissions(administrator=True)
+                   dm_permission=False, default_member_permissions=8)
+    @application_checks.has_role(admin_role)
     async def purge(self, i: Interaction, channel_id: Optional[str] = None):
         """Purge the channel, only available to admin."""
 
-        if isinstance(i.channel, discord.TextChannel):
+        if isinstance(i.channel, TextChannel):
             await i.channel.purge()  # type: ignore
         else:
             await i.send("Cannot purge this channel type.", ephemeral=True)
@@ -111,7 +112,7 @@ class Management(commands.Cog):
 
             await self.bot.db_int.add_bingo_card(card_num, user_id)
 
-            await member.send("Here is you SOOPP bingo card!", file=discord.File(card, "SOOPP Bingo Card.pdf"))
+            await member.send("Here is you SOOPP bingo card!", file=File(card, "SOOPP Bingo Card.pdf"))
             logger.info(f"Sent bingo card {card} to user {user_id}")
 
             return
@@ -138,7 +139,7 @@ class Management(commands.Cog):
                 team_name = f"VTeam {len(virtual_teams) + 1 + num_added}"
                 new_role = await guild.create_role(name=team_name)
                 await self.bot.db_int.create_virtual_team(new_role.id)
-                allowed_teams.append(Objects.DiscordVirtualTeam(new_role.id, 0))
+                allowed_teams.append(DiscordVirtualTeam(new_role.id, 0))
                 num_added += 1
 
             role = guild.get_role(random.choice(allowed_teams).role_id)
@@ -151,10 +152,10 @@ class Management(commands.Cog):
 
         return
 
-    @slash_command(name="pronoun_message", 
-                    description="Sends a message to this channel for users to select their pronouns",
-                    dm_permission = False, default_member_permissions=8)
-    @application_checks.has_permissions(administrator=True)
+    @slash_command(name="pronoun_message",
+                   description="Sends a message to this channel for users to select their pronouns",
+                   dm_permission=False, default_member_permissions=8)
+    @application_checks.has_role(admin_role)
     async def send_pronoun_message(self, i: Interaction):
         """Send pronoun message in this channel."""
 
@@ -169,9 +170,9 @@ class Management(commands.Cog):
         return
 
     @slash_command(name="bingo_message",
-                    description="Sends a message to this channel for users to play bingo",
-                    dm_permission=False, default_member_permissions=8)
-    @application_checks.has_permissions(administrator=True)
+                   description="Sends a message to this channel for users to play bingo",
+                   dm_permission=False, default_member_permissions=8)
+    @application_checks.has_role(admin_role)
     async def send_bingo_message(self, i: Interaction):
         """Send bingo message in this channel."""
 
@@ -183,9 +184,9 @@ class Management(commands.Cog):
         return
 
     @slash_command(name="virtual_team_message",
-                    description="Sends a message to this channel for users to join virtual teams",
-                    dm_permission=False, default_member_permissions=8)
-    @application_checks.has_permissions(administrator=True)
+                   description="Sends a message to this channel for users to join virtual teams",
+                   dm_permission=False, default_member_permissions=8)
+    @application_checks.has_role(admin_role)
     async def send_virtual_team_message(self, i: Interaction):
         """Send virtual team message in this channel."""
 
@@ -197,9 +198,9 @@ class Management(commands.Cog):
         return
 
     @slash_command(name="get_overwrites",
-                    description="Gets the permission overwrites for the current channel",
-                    dm_permission=False, default_member_permissions=8)
-    @application_checks.has_permissions(administrator=True)
+                   description="Gets the permission overwrites for the current channel",
+                   dm_permission=False, default_member_permissions=8)
+    @application_checks.has_role(admin_role)
     async def get_overwrites(self, i: Interaction, channel_id: Optional[int] = None):
         """Get all the permission overwrites for the current channel."""
 
@@ -230,9 +231,9 @@ class Management(commands.Cog):
         return
 
     @slash_command(name="shutdown",
-                    description="Shuts off the discord bot",
-                    dm_permission=False, default_member_permissions=8)
-    @application_checks.has_permissions(administrator=True)
+                   description="Shuts off the discord bot",
+                   dm_permission=False, default_member_permissions=8)
+    @application_checks.has_role(admin_role)
     async def shutdown(self, i):
         """Shuts down and logs out the discord bot."""
         if i.user.id in self.config["superadmin"]:
@@ -243,73 +244,29 @@ class Management(commands.Cog):
 
         else:
             return
+
     @slash_command(name="create_role", description="Creates a roles and it's channels")
     async def create_role(self, i: Interaction, name: str):
         guild = i.guild
         role = await guild.create_role(name=name, mentionable=True, hoist=True)
-        category = await guild.create_category(name=name, overwrites={role: PermissionOverwrite(view_channel=True), guild.default_role: PermissionOverwrite(view_channel=False)})
-        channel = await guild.create_text_channel(name=name, category=category)
+        overwrites = {role: PermissionOverwrite(view_channel=True),
+                      guild.default_role: PermissionOverwrite(view_channel=False)}
+        category = await guild.create_category(name=name, overwrites=overwrites)
+        await guild.create_text_channel(name=name, category=category)
         await i.send("Successfully created role and channels!", ephemeral=True)
         return
+
     @slash_command(name="create_group", description="Creates a channel with two roles allowed in it")
     async def create_group(self, i: Interaction, role1: str, role2: str):
         guild = i.guild
         category = get(guild.categories, name=role1)
-        overwrites = {get(guild.roles, name=role2): PermissionOverwrite(view_channel=True),get(guild.roles, name=role1): PermissionOverwrite(view_channel=True), guild.default_role: PermissionOverwrite(view_channel=False)}
-        await guild.create_text_channel(role1+"-"+role2, category=category, overwrites=overwrites)
+        overwrites = {get(guild.roles, name=role2): PermissionOverwrite(view_channel=True),
+                      get(guild.roles, name=role1): PermissionOverwrite(view_channel=True),
+                      guild.default_role: PermissionOverwrite(view_channel=False)}
+        await guild.create_text_channel(role1 + "-" + role2, category=category, overwrites=overwrites)
 
-        await i.send("Successfully created channel!",ephemeral=True)
+        await i.send("Successfully created channel!", ephemeral=True)
         return
-    # @commands.command()
-    # async def distribute_soopp_bingo(self, ctx: commands.Context):
-    #     """Message all frosh a soopp bingo card."""
-
-    #     if ctx.author.id not in self.config["superadmin"]:
-    #         return
-
-    #     path = "offline-files/soopp-bingo"
-    #     bingo_cards = [path + "/" + f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
-    #     logger.debug("Got bingo cards:")
-    #     for bc in bingo_cards:
-    #         logger.debug(bc)
-
-    #     group_id = await self.bot.db_int.get_group_id(group_name="Frosh")
-    #     if not group_id:
-    #         await self.bot.error("Could not get group id for Frosh group.")
-    #         return
-
-    #     all_frosh = await self.bot.db_int.get_all_users_in_group(group_id)
-    #     discord_users: List[Objects.DiscordUser] = []
-    #     for frosh in all_frosh:
-    #         discord_id = await self.bot.db_int.get_discord_user(frosh)
-    #         if not discord_id:
-    #             await self.bot.log(f"Could not get discord username for frosh id: {frosh}", "WARNING")
-
-    #         else:
-    #             discord_users.append(discord_id)
-
-    #     if len(discord_users) > len(bingo_cards):
-    #         await self.bot.error("More frosh than bingo cards, exiting.")
-    #         return
-
-    #     successes = 0
-    #     failures = 0
-    #     for i in range(len(discord_users)):
-    #         try:
-    #             usr = await self.bot.fetch_user(discord_users[i].id)
-    #             await usr.send(content="Here is your SOOPP bingo card!",
-    #                            file=discord.File(bingo_cards[i], "SOOPP Bingo Card.pdf"))
-    #             successes += 1
-    #         except Exception as e:
-    #             await self.bot.error(
-    #                 f"Could not message bingo card {bingo_cards[i]} to {discord_users[i].full_username}. \
-    #                 See log for details", exc_info=e)
-    #             failures += 1
-
-    #     final_msg = f"Sent bingo cards to {successes}. Had {failures} failures."
-    #     await ctx.reply(final_msg)
-    #     await self.bot.log(final_msg)
-    #     return
 
 
 def setup(bot):
