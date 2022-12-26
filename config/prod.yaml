@@ -4,6 +4,8 @@ bot_log_channel: 807100215651074109
 
 guild: 1045045050935083029
 
+verify_dir: '/usr/share/engfrosh_site/files/media/verification_photos/'
+
 module_settings:
   moderation:
     ignored_channels: [

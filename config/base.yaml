@@ -8,17 +8,16 @@ modules:
   cogs: [
     "cogs.cogModeration.moderation",
     "cogs.cogCoin.coin",
-    #"cogs.cogScav.scav",
+    "cogs.cogScav.scav",
     "cogs.cogManagement.management"
     ]
 
 debug: False
 log_level: INFO
 
-timezone: America/Toronto
+verify_prefix: 'verification_photos/'
 
-media_root: "files/media"
-temp_root: "files/temp"
+timezone: America/Toronto
 
 module_settings:
   moderation:
@@ -49,9 +48,7 @@ module_settings:
 
   scav:
     incorrect_message: Null
-
-    settings_names:
-      active: "scav_active"
+    user_agent: 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/109.0'
 
   management:
     superadmin: [264989719312465921]

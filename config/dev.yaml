@@ -5,6 +5,8 @@ log_level: INFO
 
 bot_log_channel: 1055928555814531142
 
+verify_dir: '../engfrosh/files/media/verification_photos/'
+
 guild: 374872527710978048
 
 module_settings:
@@ -24,3 +26,7 @@ module_settings:
       she: 1055519324913274900
       they: 1055519324913274900
       ask: 1055519324913274900
+  scav:
+    team_channels: [
+        1056696565533786162
+    ]
