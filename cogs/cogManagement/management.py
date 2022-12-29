@@ -5,11 +5,12 @@ import os
 from typing import Optional
 # from typing import List
 from nextcord.ext import commands, application_checks
-from nextcord import slash_command, Interaction, PermissionOverwrite, TextChannel, File
+from nextcord import slash_command, Interaction, PermissionOverwrite, TextChannel, File, Role
 from nextcord.utils import get
 import random
+from asgiref.sync import sync_to_async
 
-from common_models.models import DiscordVirtualTeam
+from common_models.models import VirtualTeam, RoleInvite
 
 from EngFroshBot import EngFroshBot
 
@@ -47,6 +48,34 @@ class Management(commands.Cog):
             await i.send("Cannot purge this channel type.", ephemeral=True)
 
         return
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        guild = member.guild
+        invites = await guild.invites()
+        role_invites = RoleInvite.objects.all()
+        for i in invites:
+            role_invite = await sync_to_async(role_invites.filter(link=i.id).first)()
+            if i.uses == 1 and role_invite is not None:
+                await member.add_roles(guild.get_role(role_invite.role))
+                await sync_to_async(role_invite.delete)()
+                await i.delete()
+                break
+
+    @slash_command(name="create_invite", description="Creates an invite that automatically grants a role.",
+                   dm_permission=False, default_member_permissions=8)
+    @application_checks.has_role(admin_role)
+    async def create_invite(self, i: Interaction, role: Role):
+        channel = i.guild.system_channel
+        if channel is None:
+            await i.send("Error: System channel is not configured!", ephemeral=True)
+            return
+        invite = await channel.create_invite(max_uses=2)
+        role_invite = RoleInvite()
+        role_invite.link = invite.id
+        role_invite.role = role.id
+        await sync_to_async(role_invite.save)()
+        await i.send(invite.url, ephemeral=True)
 
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
@@ -139,7 +168,7 @@ class Management(commands.Cog):
                 team_name = f"VTeam {len(virtual_teams) + 1 + num_added}"
                 new_role = await guild.create_role(name=team_name)
                 await self.bot.db_int.create_virtual_team(new_role.id)
-                allowed_teams.append(DiscordVirtualTeam(new_role.id, 0))
+                allowed_teams.append(VirtualTeam(new_role.id, 0))
                 num_added += 1
 
             role = guild.get_role(random.choice(allowed_teams).role_id)
@@ -248,6 +277,13 @@ class Management(commands.Cog):
     @slash_command(name="create_role", description="Creates a roles and it's channels")
     async def create_role(self, i: Interaction, name: str):
         guild = i.guild
+        name = name.lower()
+        if get(guild.roles, name=name) is not None:
+            await i.send("This role already exists!")
+            return
+        if get(guild.categories, name=name) is not None:
+            await i.send("This category already exists!")
+            return
         role = await guild.create_role(name=name, mentionable=True, hoist=True)
         overwrites = {role: PermissionOverwrite(view_channel=True),
                       guild.default_role: PermissionOverwrite(view_channel=False)}
@@ -260,10 +296,14 @@ class Management(commands.Cog):
     async def create_group(self, i: Interaction, role1: str, role2: str):
         guild = i.guild
         category = get(guild.categories, name=role1)
+        name = role1 + "-" + role2
+        if get(category.text_channels, name=name) is not None:
+            await i.send("This channel already exists!")
+            return
         overwrites = {get(guild.roles, name=role2): PermissionOverwrite(view_channel=True),
                       get(guild.roles, name=role1): PermissionOverwrite(view_channel=True),
                       guild.default_role: PermissionOverwrite(view_channel=False)}
-        await guild.create_text_channel(role1 + "-" + role2, category=category, overwrites=overwrites)
+        await guild.create_text_channel(name, category=category, overwrites=overwrites)
 
         await i.send("Successfully created channel!", ephemeral=True)
         return

@@ -122,6 +122,7 @@ if "log_level" in config:
 intents = Intents.default()
 intents.message_content = True
 intents.messages = True
+intents.members = True
 
 # region Client Setup
 client = EngFroshBot(config=config, log_channel=config["bot_log_channel"], intents=intents)

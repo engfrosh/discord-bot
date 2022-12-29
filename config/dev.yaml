@@ -13,7 +13,8 @@ guild: 374872527710978048
 module_settings:
   moderation:
     ignored_channels: [
-      1056676526130729050
+      1057893706826526721,
+      1056676513363263499
     ]
     report_channel: 1056676513363263499
   coin:
