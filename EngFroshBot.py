@@ -36,7 +36,7 @@ def is_admin():
             return True
         global admin_roles
         for r in admin_roles:
-            if get(member.roles, name=r) is not None:
+            if get(member.roles, id=r) is not None:
                 return True
         return False
     return application_checks.check(predicate)
