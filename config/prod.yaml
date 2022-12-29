@@ -4,7 +4,7 @@ bot_log_channel: 807100215651074109
 
 guild: 1045045050935083029
 
-admin_role: [
+admin_roles: [
     1055653040935419904
 ]
 
