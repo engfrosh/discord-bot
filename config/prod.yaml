@@ -4,7 +4,9 @@ bot_log_channel: 807100215651074109
 
 guild: 1045045050935083029
 
-admin_role: 1055653040935419904
+admin_role: [
+    1055653040935419904
+]
 
 verify_dir: '/usr/share/engfrosh_site/files/media/verification_photos/'
 
@@ -18,7 +20,6 @@ module_settings:
     scoreboard_channel: 813043254358442034
   management:
       pronoun_message: [1056677268761624646]
-      bingo_message: [1056676731399966771]
       virtual_team_message: [1056677724288204900]
   scav:
     team_channels: [

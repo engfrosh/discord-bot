@@ -2,7 +2,7 @@
 import logging
 
 import nextcord
-from nextcord.ext import commands, application_checks
+from nextcord.ext import commands
 from nextcord import slash_command, Interaction, Member, SlashOption, TextChannel, NotFound
 from nextcord.ui import View, Button
 from typing import Optional
@@ -12,7 +12,7 @@ from common_models.models import Puzzle, TeamPuzzleActivity, PuzzleGuess
 
 from django.core.files import File
 
-from EngFroshBot import EngFroshBot
+from EngFroshBot import EngFroshBot, is_admin
 from asgiref.sync import sync_to_async
 import requests
 from urllib.parse import urlparse
@@ -21,8 +21,6 @@ import uuid
 
 
 logger = logging.getLogger("Cogs.Scav")
-
-admin_role = EngFroshBot.instance.admin_role
 
 
 class VerifyButton(Button):
@@ -300,9 +298,8 @@ class Scav(commands.Cog):
     def get_team_by_name(self, team_name):
         return Team.objects.filter(display_name__iexact=team_name).first()
 
-    @slash_command(name="scav_lock", description="Lock a team's scav",
-                   dm_permission=False, default_member_permissions=8)
-    @application_checks.has_role(admin_role)
+    @slash_command(name="scav_lock", description="Lock a team's scav")
+    @is_admin()
     async def scav_lock(self, i: Interaction, team_name: str, minutes: int = 15):
         """Lock a team's scav"""
 
@@ -317,9 +314,8 @@ class Scav(commands.Cog):
     def team_scav_unlock(self, team: Team) -> None:
         team.scavenger_unlock
 
-    @slash_command(name="scav_unlock", description="Unlock a team's scav",
-                   dm_permission=False, default_member_permissions=8)
-    @application_checks.has_role(admin_role)
+    @slash_command(name="scav_unlock", description="Unlock a team's scav")
+    @is_admin()
     async def scav_unlock(self, i: Interaction, team_name: str):
         """Unlock a team's scav"""
 

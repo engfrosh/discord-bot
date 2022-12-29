@@ -7,7 +7,9 @@ bot_log_channel: 1055928555814531142
 
 verify_dir: '../engfrosh/files/media/verification_photos/'
 
-admin_role: 432167231254691852
+admin_roles: [
+    432167231254691852
+]
 guild: 374872527710978048
 
 module_settings:
@@ -21,7 +23,6 @@ module_settings:
     scoreboard_channel: 1056676601837928468
   management:
     pronoun_message: [1056677268761624646]
-    bingo_message: [1056676731399966771]
     virtual_team_message: [1056677724288204900]
     pronouns:
       he: 1055519324913274900

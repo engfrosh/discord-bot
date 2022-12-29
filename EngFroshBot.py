@@ -6,7 +6,9 @@ import asyncio
 import io
 from typing import Any, Dict, Iterable, Optional, Set
 import nextcord
-from nextcord.ext import commands
+from nextcord.ext import commands, application_checks
+from nextcord.utils import get
+from nextcord.errors import ApplicationCheckFailure
 import logging
 import datetime as dt
 import traceback
@@ -24,6 +26,21 @@ LOG_LEVELS = {
 
 instance = None
 
+admin_roles = []
+
+
+def is_admin():
+    def predicate(i: nextcord.Interaction):
+        member = i.user
+        if member.guild_permissions >= nextcord.Permissions(administrator=True):
+            return True
+        global admin_roles
+        for r in admin_roles:
+            if get(member.roles, name=r) is not None:
+                return True
+        return False
+    return application_checks.check(predicate)
+
 
 class EngFroshBot(commands.Bot):
     """Discord Bot Client with additional properties including config and error logging."""
@@ -39,7 +56,8 @@ class EngFroshBot(commands.Bot):
             self.is_debug = False
         self.log_channel = log_channel
         self.background_tasks: Set[asyncio.Task] = set()
-        self.admin_role = config['admin_role']
+        global admin_roles
+        admin_roles = config['admin_roles']
         super().__init__(description=description, default_guild_ids=[config['guild']], **options)
 
     async def _log(self, message: str, level: str = "INFO", exc_info=None) -> None:
@@ -92,6 +110,15 @@ class EngFroshBot(commands.Bot):
         trace = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
         msg = f'Ignoring exception in command {context.command}:\n{trace}'
         self.log(msg, "EXCEPTION")
+
+    async def on_application_command_error(self, i: Interaction, exception: Exception):
+        if isinstance(exception, ApplicationCheckFailure):
+            await i.send("You do not have permission to use this command!", ephemeral=True)
+            return
+        else:
+            trace = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
+            msg = f'Ignoring exception in command {context.command}:\n{trace}'
+            self.log(msg, "EXCEPTION")
 
     def error(self, message, *, exc_info=None, **kwargs):
         self.log(message, "ERROR", exc_info=exc_info, **kwargs)

@@ -1,24 +1,19 @@
 """Discord Management COG."""
 
 import logging
-import os
 from typing import Optional
 # from typing import List
-from nextcord.ext import commands, application_checks
-from nextcord import slash_command, Interaction, PermissionOverwrite, TextChannel, File, Role
+from nextcord.ext import commands
+from nextcord import slash_command, Interaction, PermissionOverwrite, TextChannel, Role, Permissions
 from nextcord.utils import get
 import random
 from asgiref.sync import sync_to_async
 
 from common_models.models import VirtualTeam, RoleInvite
 
-from EngFroshBot import EngFroshBot
-
-SOOPP_BINGO_PATH = "offline-files/soopp-bingo"
+from EngFroshBot import EngFroshBot, is_admin
 
 logger = logging.getLogger("CogManagement")
-
-admin_role = EngFroshBot.instance.admin_role
 
 
 class Management(commands.Cog):
@@ -28,17 +23,9 @@ class Management(commands.Cog):
         """Management COG init"""
         self.bot = bot
         self.config = bot.config["module_settings"]["management"]
-        self.load_bingo_cards()
 
-    def load_bingo_cards(self) -> None:
-        """Load all the bingo cards in the folder."""
-        self.bingo_cards = [
-            SOOPP_BINGO_PATH + "/" + f for f in os.listdir(SOOPP_BINGO_PATH)
-            if os.path.isfile(os.path.join(SOOPP_BINGO_PATH, f))]
-
-    @slash_command(name="purge", description="Purge all messages from this channel.",
-                   dm_permission=False, default_member_permissions=8)
-    @application_checks.has_role(admin_role)
+    @slash_command(name="purge", description="Purge all messages from this channel.")
+    @is_admin()
     async def purge(self, i: Interaction, channel_id: Optional[str] = None):
         """Purge the channel, only available to admin."""
 
@@ -62,9 +49,8 @@ class Management(commands.Cog):
                 await i.delete()
                 break
 
-    @slash_command(name="create_invite", description="Creates an invite that automatically grants a role.",
-                   dm_permission=False, default_member_permissions=8)
-    @application_checks.has_role(admin_role)
+    @slash_command(name="create_invite", description="Creates an invite that automatically grants a role.")
+    @is_admin()
     async def create_invite(self, i: Interaction, role: Role):
         channel = i.guild.system_channel
         if channel is None:
@@ -113,39 +99,6 @@ class Management(commands.Cog):
                     f"Channel: {channel_id} Emoji: {emoji} user_id: {user_id} reaction_type: {reaction_type}")
                 return
 
-        elif message_id in self.config["bingo_message"]:
-            has_card = await self.bot.db_int.check_user_has_bingo_card(user_id)
-            if has_card:
-                await member.send("You already have a bingo card!")
-                return
-
-            i = random.randint(0, len(self.bingo_cards) - 1)
-            tries = 0
-            while True:
-                tries += 1
-                if tries > len(self.bingo_cards):
-                    await self.bot.error("No bingo cards remaining.")
-                    return
-
-                card = self.bingo_cards[i]
-                # All the card names must be integers.
-                card_num = int(os.path.splitext(os.path.basename(card))[0])
-
-                linked = await self.bot.db_int.check_bingo_card_used(card_num)
-                if not linked:
-                    break
-                else:
-                    i += 1
-                    if i >= len(self.bingo_cards):
-                        i = 0
-
-            await self.bot.db_int.add_bingo_card(card_num, user_id)
-
-            await member.send("Here is you SOOPP bingo card!", file=File(card, "SOOPP Bingo Card.pdf"))
-            logger.info(f"Sent bingo card {card} to user {user_id}")
-
-            return
-
         elif message_id in self.config["virtual_team_message"]:
             virtual_teams = await self.bot.db_int.get_all_virtual_teams()
             virtual_team_ids = [vt.role_id for vt in virtual_teams]
@@ -182,9 +135,8 @@ class Management(commands.Cog):
         return
 
     @slash_command(name="pronoun_message",
-                   description="Sends a message to this channel for users to select their pronouns",
-                   dm_permission=False, default_member_permissions=8)
-    @application_checks.has_role(admin_role)
+                   description="Sends a message to this channel for users to select their pronouns")
+    @is_admin()
     async def send_pronoun_message(self, i: Interaction):
         """Send pronoun message in this channel."""
 
@@ -198,24 +150,9 @@ class Management(commands.Cog):
         await i.send("Successfully created message!", ephemeral=True)
         return
 
-    @slash_command(name="bingo_message",
-                   description="Sends a message to this channel for users to play bingo",
-                   dm_permission=False, default_member_permissions=8)
-    @application_checks.has_role(admin_role)
-    async def send_bingo_message(self, i: Interaction):
-        """Send bingo message in this channel."""
-
-        message = await i.channel.send("React to this message to get a SOOPP Bingo Card.")
-
-        await message.add_reaction("🤚")
-        await i.send("Successfully created message!", ephemeral=True)
-
-        return
-
     @slash_command(name="virtual_team_message",
-                   description="Sends a message to this channel for users to join virtual teams",
-                   dm_permission=False, default_member_permissions=8)
-    @application_checks.has_role(admin_role)
+                   description="Sends a message to this channel for users to join virtual teams")
+    @is_admin()
     async def send_virtual_team_message(self, i: Interaction):
         """Send virtual team message in this channel."""
 
@@ -227,9 +164,8 @@ class Management(commands.Cog):
         return
 
     @slash_command(name="get_overwrites",
-                   description="Gets the permission overwrites for the current channel",
-                   dm_permission=False, default_member_permissions=8)
-    @application_checks.has_role(admin_role)
+                   description="Gets the permission overwrites for the current channel")
+    @is_admin()
     async def get_overwrites(self, i: Interaction, channel_id: Optional[int] = None):
         """Get all the permission overwrites for the current channel."""
 
@@ -260,9 +196,8 @@ class Management(commands.Cog):
         return
 
     @slash_command(name="shutdown",
-                   description="Shuts off the discord bot",
-                   dm_permission=False, default_member_permissions=8)
-    @application_checks.has_role(admin_role)
+                   description="Shuts off the discord bot")
+    @is_admin()
     async def shutdown(self, i):
         """Shuts down and logs out the discord bot."""
         if i.user.id in self.config["superadmin"]:
@@ -275,16 +210,18 @@ class Management(commands.Cog):
             return
 
     @slash_command(name="create_role", description="Creates a roles and it's channels")
+    @is_admin()
     async def create_role(self, i: Interaction, name: str):
         guild = i.guild
         name = name.lower()
         if get(guild.roles, name=name) is not None:
-            await i.send("This role already exists!")
+            await i.send("This role already exists!", ephemeral=True)
             return
         if get(guild.categories, name=name) is not None:
-            await i.send("This category already exists!")
+            await i.send("This category already exists!", ephemeral=True)
             return
-        role = await guild.create_role(name=name, mentionable=True, hoist=True)
+        perms = Permissions(change_nickname=True, read_messages=True, send_messages=True)
+        role = await guild.create_role(name=name, mentionable=True, hoist=True, permissions=perms)
         overwrites = {role: PermissionOverwrite(view_channel=True),
                       guild.default_role: PermissionOverwrite(view_channel=False)}
         category = await guild.create_category(name=name, overwrites=overwrites)
@@ -293,12 +230,13 @@ class Management(commands.Cog):
         return
 
     @slash_command(name="create_group", description="Creates a channel with two roles allowed in it")
+    @is_admin()
     async def create_group(self, i: Interaction, role1: str, role2: str):
         guild = i.guild
         category = get(guild.categories, name=role1)
         name = role1 + "-" + role2
         if get(category.text_channels, name=name) is not None:
-            await i.send("This channel already exists!")
+            await i.send("This channel already exists!", ephemeral=True)
             return
         overwrites = {get(guild.roles, name=role2): PermissionOverwrite(view_channel=True),
                       get(guild.roles, name=role1): PermissionOverwrite(view_channel=True),
