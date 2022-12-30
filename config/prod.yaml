@@ -13,7 +13,7 @@ verify_dir: '/usr/share/engfrosh_site/files/media/verification_photos/'
 module_settings:
   moderation:
     ignored_channels: [
-      858741004831555634
+      1058191406646165504
     ]
     report_channels: 858741004831555634
   coin:
