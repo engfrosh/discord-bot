@@ -68,11 +68,12 @@ class Moderation(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, ctx: Message):
         """Handle every message received, checking for profanity."""
-        
+
         if ctx.author == self.bot.user or ctx.author.bot:
             return
-        if ctx.guild == None:
-            await ctx.reply("This bot does not respond to direct messages. Please contact planning or spirit for any inquiries or problems")
+        if ctx.guild is None:
+            await ctx.reply("This bot does not respond to direct messages." +
+                            " Please contact planning or spirit for any inquiries or problems")
             return
         if ctx.channel.id in self.config["ignored_channels"]:
             if self.bot.is_debug:

@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 
 import io
-from typing import Any, Dict, Iterable, Optional, Set
+from typing import Any, Dict, Optional, Set
 import nextcord
 from nextcord.ext import commands, application_checks
 from nextcord.utils import get
@@ -26,7 +26,7 @@ LOG_LEVELS = {
 
 instance = None
 
-admin_roles = []
+global_config = {}
 
 
 def is_admin():
@@ -34,10 +34,19 @@ def is_admin():
         member = i.user
         if member.guild_permissions >= nextcord.Permissions(administrator=True):
             return True
-        global admin_roles
+        admin_roles = global_config['admin_roles']
         for r in admin_roles:
             if get(member.roles, id=r) is not None:
                 return True
+        return False
+    return application_checks.check(predicate)
+
+
+def is_superadmin():
+    def predicate(i: nextcord.Interaction):
+        superadmin = global_config['module_settings']['management']['superadmin']
+        if i.user.id in superadmin:
+            return True
         return False
     return application_checks.check(predicate)
 
@@ -56,8 +65,8 @@ class EngFroshBot(commands.Bot):
             self.is_debug = False
         self.log_channel = log_channel
         self.background_tasks: Set[asyncio.Task] = set()
-        global admin_roles
-        admin_roles = config['admin_roles']
+        global global_config
+        global_config = config
         super().__init__(description=description, default_guild_ids=[config['guild']], **options)
 
     async def _log(self, message: str, level: str = "INFO", exc_info=None) -> None:
@@ -113,7 +122,7 @@ class EngFroshBot(commands.Bot):
         msg = f'Ignoring exception in command {context.command}:\n{trace}'
         self.log(msg, "EXCEPTION")
 
-    async def on_application_command_error(self, i: Interaction, exception: Exception):
+    async def on_application_command_error(self, i: nextcord.Interaction, exception: Exception):
         if isinstance(exception, ApplicationCheckFailure):
             await i.send("You do not have permission to use this command!", ephemeral=True)
             return
