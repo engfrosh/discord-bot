@@ -236,12 +236,20 @@ class Management(commands.Cog):
     async def create_group(self, i: Interaction, role1: str, role2: str):
         guild = i.guild
         category = get(guild.categories, name=role1)
+        if category is None:
+            await i.send("Unable to find a role with that name!", ephemeral=True)
+            return
+        r1 = get(guild.roles, name=role1)
+        r2 = get(guild.roles, name=role2)
+        if r1 is None or r2 is None:
+            await i.send("Unable to find a role with that name!", ephemeral=True)
+            return
         name = role1 + "-" + role2
         if get(category.text_channels, name=name) is not None:
             await i.send("This channel already exists!", ephemeral=True)
             return
-        overwrites = {get(guild.roles, name=role2): PermissionOverwrite(view_channel=True),
-                      get(guild.roles, name=role1): PermissionOverwrite(view_channel=True),
+        overwrites = {r2: PermissionOverwrite(view_channel=True),
+                      r1: PermissionOverwrite(view_channel=True),
                       guild.default_role: PermissionOverwrite(view_channel=False)}
         await guild.create_text_channel(name, category=category, overwrites=overwrites)
 

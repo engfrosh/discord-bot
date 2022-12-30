@@ -47,7 +47,7 @@ class EngFroshBot(commands.Bot):
 
     def __init__(self, config: Dict[str, Any],
                  help_command: Optional[str] = None, description: Optional[str] = None,
-                 log_channel: Optional[Iterable[int]] = [],
+                 log_channel: Optional[int] = [],
                  **options):
         self.config = config
         if "debug" in config and config["debug"]:
@@ -65,13 +65,15 @@ class EngFroshBot(commands.Bot):
 
         # Send to log channels
         content = f"\n{level} {dt.datetime.now().isoformat()}: {message}\n"
+        guild = self.get_guild(self.config['guild'])
+        channel = guild.get_channel(self.log_channel)
         if len(content) >= 1900:
             fp = io.StringIO(content)
             file = nextcord.File(fp, f"{dt.datetime.now().isoformat()}.log")
-            await self.get_guild(self.config['guild']).get_channel(self.log_channel).send(file=file)
+            await channel.send(file=file)
 
         else:
-            await self.get_guild(self.config['guild']).get_channel(self.log_channel).send(content)
+            await channel.send(content)
 
     def log(self, message: str, level: str = "INFO", exc_info=None, *, print_to_console=False, send_to_discord=True):
         """Log a message to the console, the logger, and the bot channels."""
@@ -116,9 +118,10 @@ class EngFroshBot(commands.Bot):
             await i.send("You do not have permission to use this command!", ephemeral=True)
             return
         else:
+            await i.send("An error occurred! Please contact planning if this issue persists", ephemeral=True)
             trace = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
-            msg = f'Ignoring exception in command {context.command}:\n{trace}'
-            self.log(msg, "EXCEPTION")
+            msg = f'Ignoring exception in command {i.application_command}:\n{trace}'
+            self.log(msg, "ERROR")
 
     def error(self, message, *, exc_info=None, **kwargs):
         self.log(message, "ERROR", exc_info=exc_info, **kwargs)
