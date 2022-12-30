@@ -4,7 +4,7 @@ import logging
 from typing import Optional
 # from typing import List
 from nextcord.ext import commands
-from nextcord import slash_command, Interaction, PermissionOverwrite, TextChannel, Role, Permissions
+from nextcord import slash_command, Interaction, PermissionOverwrite, TextChannel, Role, Permissions, SlashOption
 from nextcord.utils import get
 import random
 from asgiref.sync import sync_to_async
@@ -45,13 +45,14 @@ class Management(commands.Cog):
             role_invite = await sync_to_async(role_invites.filter(link=i.id).first)()
             if i.uses == 1 and role_invite is not None:
                 await member.add_roles(guild.get_role(role_invite.role))
+                await member.edit(nick=role_invite.nick)
                 await sync_to_async(role_invite.delete)()
                 await i.delete()
                 break
 
     @slash_command(name="create_invite", description="Creates an invite that automatically grants a role.")
     @is_admin()
-    async def create_invite(self, i: Interaction, role: Role):
+    async def create_invite(self, i: Interaction, role: Role, nick: Optional[str] = SlashOption(required=False)):
         channel = i.guild.system_channel
         if channel is None:
             await i.send("Error: System channel is not configured!", ephemeral=True)
@@ -60,6 +61,7 @@ class Management(commands.Cog):
         role_invite = RoleInvite()
         role_invite.link = invite.id
         role_invite.role = role.id
+        role_invite.nick = nick
         await sync_to_async(role_invite.save)()
         await i.send(invite.url, ephemeral=True)
 
