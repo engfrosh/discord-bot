@@ -216,7 +216,7 @@ class Management(commands.Cog):
     @is_admin()
     async def create_role(self, i: Interaction, name: str):
         guild = i.guild
-        name = name.lower()
+        name = name.title()
         if get(guild.roles, name=name) is not None:
             await i.send("This role already exists!", ephemeral=True)
             return
@@ -228,7 +228,7 @@ class Management(commands.Cog):
         overwrites = {role: PermissionOverwrite(view_channel=True),
                       guild.default_role: PermissionOverwrite(view_channel=False)}
         category = await guild.create_category(name=name, overwrites=overwrites)
-        await guild.create_text_channel(name=name, category=category)
+        await guild.create_text_channel(name=name.lower(), category=category)
         await i.send("Successfully created role and channels!", ephemeral=True)
         return
 
@@ -236,9 +236,9 @@ class Management(commands.Cog):
     @is_admin()
     async def create_group(self, i: Interaction, role1: str, role2: str):
         guild = i.guild
-        role1 = role1.lower()
-        role2 = role2.lower()
-        category = get(guild.categories, name=role1)
+        role1 = role1.title()
+        role2 = role2.title()
+        category = get(guild.categories, name=role1.lower())
         if category is None:
             await i.send("Unable to find a role with that name!", ephemeral=True)
             return
@@ -247,7 +247,7 @@ class Management(commands.Cog):
         if r1 is None or r2 is None:
             await i.send("Unable to find a role with that name!", ephemeral=True)
             return
-        name = role1 + "-" + role2
+        name = role1.lower() + "-" + role2.lower()
         if get(category.text_channels, name=name) is not None:
             await i.send("This channel already exists!", ephemeral=True)
             return
