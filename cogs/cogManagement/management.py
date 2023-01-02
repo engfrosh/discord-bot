@@ -236,6 +236,8 @@ class Management(commands.Cog):
     @is_admin()
     async def create_group(self, i: Interaction, role1: str, role2: str):
         guild = i.guild
+        role1 = role1.lower()
+        role2 = role2.lower()
         category = get(guild.categories, name=role1)
         if category is None:
             await i.send("Unable to find a role with that name!", ephemeral=True)
