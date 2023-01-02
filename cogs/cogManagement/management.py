@@ -31,6 +31,7 @@ class Management(commands.Cog):
 
         if isinstance(i.channel, TextChannel):
             await i.channel.purge()  # type: ignore
+            await i.send("Successfully purged channel!", ephemeral=True)
         else:
             await i.send("Cannot purge this channel type.", ephemeral=True)
 
