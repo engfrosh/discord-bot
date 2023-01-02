@@ -9,6 +9,7 @@ from nextcord import Message, NotFound
 from better_profanity import profanity
 import better_profanity.constants
 from EngFroshBot import EngFroshBot
+from typing import Optional
 
 logger = logging.getLogger("Cogs.Moderation")
 
@@ -65,10 +66,13 @@ class Moderation(commands.Cog):
 
         return False
 
-    @commands.Cog.listener()
-    async def on_message(self, ctx: Message):
+    @commands.Cog.listener(name="on_message")
+    @commands.Cog.listener(name="on_message_edit")
+    async def on_message(self, before: Message, after: Optional[Message] = None):
         """Handle every message received, checking for profanity."""
-
+        ctx = before
+        if after is not None:
+            ctx = after
         if ctx.author == self.bot.user or ctx.author.bot:
             return
         if ctx.guild is None:
