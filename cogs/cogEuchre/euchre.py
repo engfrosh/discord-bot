@@ -83,7 +83,7 @@ class Euchre(commands.Cog):
         await i.send("Euchre game started! Dealer is "+dealer_mention+"\n"+next_mention+" goes first!\nTrump to be selected is "+game.current_trick.opener.name)
     
     def get_player_cards(self, player):
-        return list(EuchreCard.objects.filter(player=player))
+        return list(EuchreCard.objects.filter(player=player).exclude(played=True))
 
     @slash_command(name="euchre_hand", description="Shows your current cards")
     async def show_hand(self, i: Interaction):
@@ -96,9 +96,7 @@ class Euchre(commands.Cog):
         await i.send(message, ephemeral=True)
 
     def get_card_from_name(self, name, player):
-        print(name)
-        for card in EuchreCard.objects.filter(player=player):
-            print(card.name)
+        for card in EuchreCard.objects.filter(player=player).exclude(played=True):
             if card.name.lower() == name.lower():
                 return card
         return None
@@ -166,6 +164,74 @@ class Euchre(commands.Cog):
         await i.send("It is now "+next_mention + "'s turn ot accept or reject trump!")
         if result[0]:
             await i.send("You can select any card in your hand to become trump!")
+
+    def euchre_play_sync(self, player, card_name):
+        game = player.team.game
+        if game.selector != player:
+            return ("It is not your turn!", True)
+        card = self.get_card_from_name(card_name, player)
+        if card is None:
+            return ("Unable to find that card!", True)
+        card.played = True
+        card.save()
+        trick = game.current_trick
+        if trick.selection == True:
+            return ("Trump has not been chosen!", True)
+        next_selector =  game.compute_selector().id
+        if trick.opener is None:
+            trick.opener = card
+            trick.highest = card
+            trick.save()
+            return ("Played card "+card_name, False, False, next_selector)
+        highest = trick.highest
+        if card.suit == game.trump:
+            if highest.suit != game.trump:
+                # any trump is higher than all non trump cards
+                trick.highest = card
+                trick.save()
+            elif trick.highest.rank < card.rank:
+                # these 2 are not able to equal because each card is unique
+                trick.highest = card
+                trick.save()
+
+        elif card.suit == trick.opener.suit:
+            if highest.suit != game.trump and card.rank > highest.rank:
+                trick.highest = card
+                trick.save()
+
+        if player == trick.opener.player:
+            # End of turn
+            winning_team = highest.player.team
+            winning_team.tricks_won += 1
+            winning_team.save()
+            return ("Played card "+card_name, False, True)
+        return ("Played card "+card_name, False, False, next_selector)
+
+    def get_trick_winner(self, player):
+        trick = player.team.game.current_trick
+        team = trick.highest.team
+        result = []
+        for player in EuchrePlayer.objects.filter(team=team):
+            result += [player.id]
+        return result
+    @slash_command(name="euchre_play", description="Plays a card from your hand")
+    async def euchre_play(self, i: Interaction, card: str):
+        id = i.user.id
+        player = await sync_to_async(EuchrePlayer.objects.filter(id=id).first)()
+        result = await sync_to_async(self.euchre_play_sync)(player, card)
+        await i.send(result[0], ephemeral=result[1])
+        if not result[1] and result[2]:
+            # Trick is over
+            team = await sync_to_async(get_trick_winner)(player)
+            data = ""
+            for p in team:
+                user = i.guild.get_member(p.id).mention
+                data += user + " "
+            data += "won this trick!"
+            await i.send(data)
+        elif not result[1] and not result[2]:
+            mention = i.guild.get_member(result[3]).mention
+            await i.send("Its "+mention+"'s turn!")
 
 def setup(bot):
     bot.add_cog(Euchre(bot))
