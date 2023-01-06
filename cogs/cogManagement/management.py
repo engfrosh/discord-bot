@@ -240,7 +240,7 @@ class Management(commands.Cog):
         role2 = role2.title()
         category = get(guild.categories, name=role1.lower())
         if category is None:
-            await i.send("Unable to find a role with that name!", ephemeral=True)
+            await i.send("Unable to find a category with that name!", ephemeral=True)
             return
         r1 = get(guild.roles, name=role1)
         r2 = get(guild.roles, name=role2)
