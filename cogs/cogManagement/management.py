@@ -5,7 +5,6 @@ from typing import Optional
 # from typing import List
 from nextcord.ext import commands
 from nextcord import slash_command, Interaction, PermissionOverwrite, TextChannel, Role, Permissions, SlashOption
-from nextcord.utils import get
 import random
 from asgiref.sync import sync_to_async
 
@@ -212,15 +211,22 @@ class Management(commands.Cog):
         else:
             return
 
+    def get(self, data: list, name: str):
+        name = name.lower()
+        for d in data:
+            if d.name.lower() == name:
+                return d
+        return None
+
     @slash_command(name="create_role", description="Creates a roles and it's channels")
     @is_admin()
     async def create_role(self, i: Interaction, name: str):
         guild = i.guild
         name = name.title()
-        if get(guild.roles, name=name) is not None:
+        if self.get(guild.roles, name) is not None:
             await i.send("This role already exists!", ephemeral=True)
             return
-        if get(guild.categories, name=name) is not None:
+        if self.get(guild.categories, name) is not None:
             await i.send("This category already exists!", ephemeral=True)
             return
         perms = Permissions(change_nickname=True, read_messages=True, send_messages=True)
@@ -238,17 +244,17 @@ class Management(commands.Cog):
         guild = i.guild
         role1 = role1.title()
         role2 = role2.title()
-        category = get(guild.categories, name=role1.lower())
+        category = self.get(guild.categories, role1)
         if category is None:
             await i.send("Unable to find a category with that name!", ephemeral=True)
             return
-        r1 = get(guild.roles, name=role1)
-        r2 = get(guild.roles, name=role2)
+        r1 = self.get(guild.roles, role1)
+        r2 = self.get(guild.roles, role2)
         if r1 is None or r2 is None:
             await i.send("Unable to find a role with that name!", ephemeral=True)
             return
         name = role1.lower() + "-" + role2.lower()
-        if get(category.text_channels, name=name) is not None:
+        if self.get(category.text_channels, name) is not None:
             await i.send("This channel already exists!", ephemeral=True)
             return
         overwrites = {r2: PermissionOverwrite(view_channel=True),
