@@ -119,6 +119,9 @@ class Euchre(commands.Cog):
     async def show_hand(self, i: Interaction):
         id = i.user.id
         player = await sync_to_async(EuchrePlayer.objects.filter(id=id).first)()
+        if player is None:
+            await i.send("You are not playing Euchre!", ephemeral=True)
+            return
         cards = await sync_to_async(self.get_player_cards)(player=player)
         message = "Your cards are:\n"
         for card in cards:
@@ -132,6 +135,8 @@ class Euchre(commands.Cog):
         return None
 
     def euchre_accept_sync(self, player, card):
+        if player is None or player.team is None:
+            return ("You are not playing Euchre!", True)
         game = player.team.game
         trick = game.current_trick
         if not trick.selection:
@@ -197,6 +202,8 @@ class Euchre(commands.Cog):
             await i.send("It is " + next_mention + "'s turn")
 
     def euchre_reject_sync(self, player):
+        if player is None or player.team is None:
+            return ("You are not playing Euchre!", True, True)
         game = player.team.game
         trick = game.current_trick
         if not trick.selection:
@@ -223,6 +230,8 @@ class Euchre(commands.Cog):
             await i.send(result[0], ephemeral=True)
 
     def euchre_play_sync(self, player, card_name):
+        if player is None or player.team is None:
+            return ("You are not playing Euchre!", True)
         game = player.team.game
         if game.selector != player:
             return ("It is not your turn!", True)
@@ -347,6 +356,8 @@ class Euchre(commands.Cog):
             await i.send("Its " + mention + "'s turn!")
 
     def euchre_end_sync(self, player):
+        if player is None or player.team is None:
+            return None
         game = player.team.game
         teams = EuchreTeam.objects.filter(game=game)
         points = []
@@ -361,6 +372,9 @@ class Euchre(commands.Cog):
         id = i.user.id
         player = await sync_to_async(EuchrePlayer.objects.filter(id=id).first)()
         result = await sync_to_async(self.euchre_end_sync)(player)
+        if result is None:
+            await i.send("You are not playing Euchre!", ephemeral=True)
+            return
         message = "Ended game with scores:\n"
         for team in result:
             p1 = i.guild.get_member(team[0]).mention
@@ -369,6 +383,8 @@ class Euchre(commands.Cog):
         await i.send(message)
 
     def euchre_status_sync(self, player):
+        if player is None or player.team is None:
+            return None
         game = player.team.game
         teams = EuchreTeam.objects.filter(game=game)
         output = []
@@ -385,6 +401,9 @@ class Euchre(commands.Cog):
         id = i.user.id
         player = await sync_to_async(EuchrePlayer.objects.filter(id=id).first)()
         output = await sync_to_async(self.euchre_status_sync)(player)
+        if output is None:
+            await i.send("You are not playing Euchre!", ephemeral=True)
+            return
         message = ""
         for team in output:
             mention = ""
