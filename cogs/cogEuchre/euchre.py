@@ -368,7 +368,6 @@ class Euchre(commands.Cog):
             message += p1 + " " + p2 + " : " + team[2] + " points!\n"
         await i.send(message)
 
-
     def euchre_status_sync(self, player):
         game = player.team.game
         teams = EuchreTeam.objects.filter(game=game)
@@ -380,7 +379,6 @@ class Euchre(commands.Cog):
                 players += [player.id]
             output += [(players, team.tricks_won, team.points)]
         return output
-
 
     @slash_command(name="euchre_status", description="Gets the current status of a Euchre game")
     async def euchre_status(self, i: Interaction):
