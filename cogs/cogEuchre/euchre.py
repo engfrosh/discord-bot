@@ -273,6 +273,7 @@ class Euchre(commands.Cog):
             if not highest.is_bower(game.trump) and highest.suit != game.trump and card.rank > highest.rank:
                 trick.highest = card
                 trick.save()
+        highest = trick.highest  # This must be run again in case it changed above
         if next_selector == trick.opener.player.id:
             # End of turn
             winning_team = highest.player.team
@@ -281,14 +282,16 @@ class Euchre(commands.Cog):
             if game.check_for_winner():
                 winning_team.points += game.points
                 winning_team.save()
+                players = []
                 for team in EuchreTeam.objects.filter(game=game):
                     team.tricks_won = 0
                     team.save()
+                    players += list(EuchrePlayer.objects.filter(team=team))
                 new_next_dealer = game.compute_dealers(game.dealer)
                 game.dealer = game.next_dealer
                 game.next_dealer = new_next_dealer
                 game.selector = game.next_dealer
-                cards = self.shuffle()
+                cards = self.shuffle(players)
                 game.extra_card = cards[1]
                 game.save()
                 trick.opener = cards[0]
@@ -334,7 +337,7 @@ class Euchre(commands.Cog):
                 await i.send("Its " + next + "'s turn!")
             else:
                 # game is over
-                data += "won this game and now have " + result[4] + "points!"
+                data += "won this game and now have " + str(result[4]) + "points!"
                 dealer_mention = i.guild.get_member(result[5]).mention
                 next_mention = i.guild.get_member(result[6]).mention
                 await i.send(data + "\nNew dealer is " + dealer_mention + "\n" + next_mention +
@@ -364,6 +367,34 @@ class Euchre(commands.Cog):
             p2 = i.guild.get_member(team[1]).mention
             message += p1 + " " + p2 + " : " + team[2] + " points!\n"
         await i.send(message)
+
+
+    def euchre_status_sync(self, player):
+        game = player.team.game
+        teams = EuchreTeam.objects.filter(game=game)
+        output = []
+        for team in teams:
+            players = []
+            p = EuchrePlayer.objects.filter(team=team)
+            for player in p:
+                players += [player.id]
+            output += [(players, team.tricks_won, team.points)]
+        return output
+
+
+    @slash_command(name="euchre_status", description="Gets the current status of a Euchre game")
+    async def euchre_status(self, i: Interaction):
+        id = i.user.id
+        player = await sync_to_async(EuchrePlayer.objects.filter(id=id).first)()
+        output = await sync_to_async(self.euchre_status_sync)(player)
+        message = ""
+        for team in output:
+            mention = ""
+            for player in team[0]:
+                mention += i.guild.get_member(player).mention + " "
+            mention += ": " + str(team[1]) + " Trick(s) : " + str(team[2]) + " Point(s)"
+            message += mention + "\n"
+        await i.send(message, ephemeral=True)
 
 
 def setup(bot):
