@@ -10,7 +10,8 @@ modules:
     "cogs.cogCoin.coin",
     "cogs.cogScav.scav",
     "cogs.cogManagement.management",
-    "cogs.cogEuchre.euchre"
+    "cogs.cogEuchre.euchre",
+    "cogs.cogRobert.robert"
     ]
 
 debug: False
