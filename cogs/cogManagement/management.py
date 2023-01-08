@@ -219,7 +219,6 @@ class Management(commands.Cog):
         return None
 
     @slash_command(name="create_role", description="Creates a roles and it's channels")
-    @is_admin()
     async def create_role(self, i: Interaction, name: str):
         guild = i.guild
         name = name.title()
@@ -239,7 +238,6 @@ class Management(commands.Cog):
         return
 
     @slash_command(name="create_group", description="Creates a channel with two roles allowed in it")
-    @is_admin()
     async def create_group(self, i: Interaction, role1: str, role2: str):
         guild = i.guild
         role1 = role1.title()
