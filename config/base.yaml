@@ -6,7 +6,6 @@ modules:
   # Warning, lots of functionality will fail if not using a postgres database.
 
   cogs: [
-    "cogs.cogModeration.moderation",
     "cogs.cogCoin.coin",
     "cogs.cogScav.scav",
     "cogs.cogManagement.management",

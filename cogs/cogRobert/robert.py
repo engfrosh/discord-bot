@@ -7,6 +7,7 @@ from asgiref.sync import sync_to_async
 class Robert(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.config = bot.config["module_settings"]["robert"]
 
     def robert_add_sync(self, type: int, id: int):
         entry = RobertEntry(user=id, type=type)
@@ -19,6 +20,14 @@ class Robert(commands.Cog):
             return
         await sync_to_async(self.robert_add_sync)(type, i.user.id)
         await i.send("You have been added to the queue", ephemeral=True)
+        channel = i.guild.get_channel(self.config['updates_channel'])
+        message = "**Robert Queue**\n"
+        queue = await sync_to_async(self.get_queue)()
+        for robert in queue:
+            user = i.guild.get_member(robert.user)
+            message += str(robert.type) + ": " + user.display_name + " : From " + str(robert.created)
+            message += "\n"
+        await channel.send(message)
 
     def get_queue(self):
         roberts = list(RobertEntry.objects.order_by('-type', 'created'))
@@ -52,7 +61,7 @@ class Robert(commands.Cog):
         message = ""
         for robert in queue:
             user = i.guild.get_member(robert.user)
-            message += user.display_name + " : Type " + str(robert.type) + " : From " + str(robert.created)
+            message += str(robert.type) + ": " + user.display_name + " : From " + str(robert.created)
             message += "\n"
         await i.send(message, ephemeral=True)
 
