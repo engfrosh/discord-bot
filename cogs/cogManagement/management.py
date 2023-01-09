@@ -36,6 +36,11 @@ class Management(commands.Cog):
 
         return
 
+    @slash_command(name="echo", description="Echos messages back from the bot")
+    @is_admin()
+    async def echo(self, i: Interaction, message: str):
+        await i.send(str)
+
     @commands.Cog.listener()
     async def on_member_join(self, member):
         guild = member.guild
