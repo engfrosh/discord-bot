@@ -40,7 +40,7 @@ class Management(commands.Cog):
     @is_admin()
     async def echo(self, i: Interaction, message: str):
         await i.channel.send(message)
-	await i.send("")
+        await i.send("")
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
