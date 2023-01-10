@@ -39,8 +39,8 @@ class Management(commands.Cog):
     @slash_command(name="echo", description="Echos messages back from the bot")
     @is_admin()
     async def echo(self, i: Interaction, message: str):
+        await i.send("Echod message!", ephemeral=True)
         await i.channel.send(message)
-        await i.send("")
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
