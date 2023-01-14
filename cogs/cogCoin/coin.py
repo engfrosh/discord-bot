@@ -1,7 +1,7 @@
 import logging
 from nextcord.ext import commands
 from nextcord import slash_command, Interaction
-from EngFroshBot import EngFroshBot, is_admin
+from EngFroshBot import EngFroshBot, is_admin, has_permission
 from common_models.models import Team
 from asgiref.sync import sync_to_async
 
@@ -14,7 +14,7 @@ class Coin(commands.Cog):
         self.config = bot.config["module_settings"]["coin"]
 
     @slash_command(name="set_coin", description="Changes a team's coin value")
-    @is_admin()
+    @has_permission("common_models.change_team_coin")
     async def coin(self, i: Interaction, team, amount):
         """Change team's coin: coin [team] [amount]"""
         res = await sync_to_async(self.update_coin_amount)(int(amount), team)
