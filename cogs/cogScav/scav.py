@@ -12,7 +12,7 @@ from common_models.models import Puzzle, TeamPuzzleActivity, PuzzleGuess
 
 from django.core.files import File
 
-from EngFroshBot import EngFroshBot, is_admin
+from EngFroshBot import EngFroshBot, has_permission
 from asgiref.sync import sync_to_async
 import requests
 from urllib.parse import urlparse
@@ -160,6 +160,7 @@ class Scav(commands.Cog):
         return team.active_puzzles
 
     @slash_command(name="guess", description="Makes a scav guess")
+    @has_permission("common_models.guess_scavenger_puzzle")
     async def guess(self, i: Interaction, guess: str, file: Optional[nextcord.Attachment] = SlashOption(required=False)):  # noqa: E501
         """Make a guess of the answer to the current scav question."""
 
@@ -299,7 +300,7 @@ class Scav(commands.Cog):
         return Team.objects.filter(display_name__iexact=team_name).first()
 
     @slash_command(name="scav_lock", description="Lock a team's scav")
-    @is_admin()
+    @has_permission("common_models.manage_scav")
     async def scav_lock(self, i: Interaction, team_name: str, minutes: int = 15):
         """Lock a team's scav"""
 
@@ -315,7 +316,7 @@ class Scav(commands.Cog):
         team.scavenger_unlock
 
     @slash_command(name="scav_unlock", description="Unlock a team's scav")
-    @is_admin()
+    @has_permission("common_models.manage_scav")
     async def scav_unlock(self, i: Interaction, team_name: str):
         """Unlock a team's scav"""
 

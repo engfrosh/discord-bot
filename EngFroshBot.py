@@ -12,6 +12,8 @@ from nextcord.errors import ApplicationCheckFailure
 import logging
 import datetime as dt
 import traceback
+from common_models.models import DiscordUser
+from asgiref.sync import sync_to_async
 
 logger = logging.getLogger("EngFroshBot")
 
@@ -32,6 +34,9 @@ global_config = {}
 def is_admin():
     def predicate(i: nextcord.Interaction):
         member = i.user
+        superadmin = global_config['module_settings']['management']['superadmin']
+        if i.user.id in superadmin:
+            return True
         if member.guild_permissions >= nextcord.Permissions(administrator=True):
             return True
         admin_roles = global_config['admin_roles']
@@ -48,6 +53,25 @@ def is_superadmin():
         if i.user.id in superadmin:
             return True
         return False
+    return application_checks.check(predicate)
+
+
+def has_permission(perm):
+    def predicate_sync(member):
+        if member.guild_permissions >= nextcord.Permissions(administrator=True):
+            return True
+        user = member.id
+        superadmin = global_config['module_settings']['management']['superadmin']
+        if user in superadmin:
+            return True
+        discord_user = DiscordUser.objects.filter(id=user).first()
+        user_model = discord_user.user
+        if user_model.is_superuser:
+            return True
+        return user_model.has_perm(perm)
+
+    async def predicate(i: nextcord.Interaction):
+        return await sync_to_async(predicate_sync)(i.user)
     return application_checks.check(predicate)
 
 

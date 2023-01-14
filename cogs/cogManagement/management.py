@@ -10,7 +10,7 @@ from asgiref.sync import sync_to_async
 
 from common_models.models import VirtualTeam, RoleInvite
 
-from EngFroshBot import EngFroshBot, is_admin
+from EngFroshBot import EngFroshBot, is_admin, has_permission, is_superadmin
 
 logger = logging.getLogger("CogManagement")
 
@@ -24,7 +24,7 @@ class Management(commands.Cog):
         self.config = bot.config["module_settings"]["management"]
 
     @slash_command(name="purge", description="Purge all messages from this channel.")
-    @is_admin()
+    @has_permission("common_models.purge_channels")
     async def purge(self, i: Interaction, channel_id: Optional[str] = None):
         """Purge the channel, only available to admin."""
 
@@ -57,7 +57,7 @@ class Management(commands.Cog):
                 break
 
     @slash_command(name="create_invite", description="Creates an invite that automatically grants a role.")
-    @is_admin()
+    @has_permission("common_models.create_invite")
     async def create_invite(self, i: Interaction, role: Role, nick: Optional[str] = SlashOption(required=False)):
         channel = i.guild.system_channel
         if channel is None:
@@ -205,7 +205,7 @@ class Management(commands.Cog):
 
     @slash_command(name="shutdown",
                    description="Shuts off the discord bot")
-    @is_admin()
+    @is_superadmin()
     async def shutdown(self, i):
         """Shuts down and logs out the discord bot."""
         if i.user.id in self.config["superadmin"]:
@@ -225,6 +225,7 @@ class Management(commands.Cog):
         return None
 
     @slash_command(name="create_role", description="Creates a roles and it's channels")
+    @has_permission("common_models.create_role")
     async def create_role(self, i: Interaction, name: str):
         guild = i.guild
         name = name.title()
@@ -244,6 +245,7 @@ class Management(commands.Cog):
         return
 
     @slash_command(name="create_group", description="Creates a channel with two roles allowed in it")
+    @has_permission("common_models.create_channel")
     async def create_group(self, i: Interaction, role1: str, role2: str):
         guild = i.guild
         role1 = role1.title()
