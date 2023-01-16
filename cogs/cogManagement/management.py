@@ -246,26 +246,33 @@ class Management(commands.Cog):
 
     @slash_command(name="create_group", description="Creates a channel with two roles allowed in it")
     @has_permission("common_models.create_channel")
-    async def create_group(self, i: Interaction, role1: str, role2: str):
+    async def create_group(self, i: Interaction, roles: str):
+        roles = roles.split()
         guild = i.guild
-        role1 = role1.title()
-        role2 = role2.title()
+        if len(roles) < 1:
+            await i.send("You must specify at least 1 role!", ephemeral=True)
+            return
+        role1 = roles[0].title()
+        
         category = self.get(guild.categories, role1)
         if category is None:
             await i.send("Unable to find a category with that name!", ephemeral=True)
             return
-        r1 = self.get(guild.roles, role1)
-        r2 = self.get(guild.roles, role2)
-        if r1 is None or r2 is None:
-            await i.send("Unable to find a role with that name!", ephemeral=True)
-            return
-        name = role1.lower() + "-" + role2.lower()
+        r = []
+        for j in range(len(roles)):
+            r += [self.get(guild.roles, roles[j].title())]
+            if r[j] is None:
+                await i.send("Unable to find a role with the name \""+roles[j]+"\"!", ephemeral=True)
+                return
+        name = roles[0].lower()
+        for j in range(1, len(roles)):
+            name += "-" + roles[j].lower()
         if self.get(category.text_channels, name) is not None:
             await i.send("This channel already exists!", ephemeral=True)
             return
-        overwrites = {r2: PermissionOverwrite(view_channel=True),
-                      r1: PermissionOverwrite(view_channel=True),
-                      guild.default_role: PermissionOverwrite(view_channel=False)}
+        overwrites = {guild.default_role: PermissionOverwrite(view_channel=False)}
+        for role in r:
+            overwrites[role] = PermissionOverwrite(view_channel=True)
         await guild.create_text_channel(name, category=category, overwrites=overwrites)
 
         await i.send("Successfully created channel!", ephemeral=True)
