@@ -253,7 +253,7 @@ class Management(commands.Cog):
             await i.send("You must specify at least 1 role!", ephemeral=True)
             return
         role1 = roles[0].title()
-        
+
         category = self.get(guild.categories, role1)
         if category is None:
             await i.send("Unable to find a category with that name!", ephemeral=True)

@@ -1,0 +1,30 @@
+# These settings are only for settings that will not need to be changed while running
+
+bot_log_channel: 1065810600455839887
+
+guild: 1065809571836334100
+
+admin_roles: [
+    1065810471313211492
+]
+
+verify_dir: '/usr/share/engfrosh_site/files/media/verification_photos/'
+
+modules:
+  cogs: [
+    "cogs.cogCoin.coin",
+    "cogs.cogScav.scav",
+    "cogs.cogManagement.management",
+    ]
+
+module_settings:
+  coin:
+    scoreboard_channel: 1065810690331381851
+  management:
+      pronoun_message: []
+      virtual_team_message: []
+  scav:
+    team_channels: [
+        
+    ]
+    verify_channel: 1065810796375969902

@@ -1,7 +1,7 @@
 import logging
 from nextcord.ext import commands
 from nextcord import slash_command, Interaction
-from EngFroshBot import EngFroshBot, is_admin, has_permission
+from EngFroshBot import EngFroshBot, has_permission
 from common_models.models import Team
 from asgiref.sync import sync_to_async
 

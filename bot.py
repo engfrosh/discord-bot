@@ -73,6 +73,10 @@ logging.getLogger().addHandler(stream_handler)
 
 # region Environment Variable, Deployment Type, and Bot Token
 deploy_type = os.environ.get("ENGFROSH_DEPLOY_TYPE")
+config_type = os.environ.get("ENGFROSH_CONFIG_TYPE")
+if config_type is None:
+    logger.error("No config specified!")
+    exit()
 development = False
 production = True
 if deploy_type is None:
@@ -93,23 +97,15 @@ bot_token = os.environ.get("DISCORD_BOT_TOKEN")
 
 # region Load Configs
 BASE_CONFIG_FILE = CURRENT_DIRECTORY + "/config/base.yaml"
-DEV_CONFIG_FILE = CURRENT_DIRECTORY + "/config/dev.yaml"
-PROD_CONFIG_FILE = CURRENT_DIRECTORY + "/config/prod.yaml"
+CONFIG_FILE = CURRENT_DIRECTORY + "/config/" + config_type + ".yaml"
 
 with open(BASE_CONFIG_FILE) as f:
     config: Dict = yaml.load(f, Loader=yaml.SafeLoader)
 
-if development:
-    with open(DEV_CONFIG_FILE) as f:
-        dev_config = yaml.load(f, Loader=yaml.SafeLoader)
-        if dev_config:
-            config = recursive_update(config, dev_config)
-
-if production:
-    with open(PROD_CONFIG_FILE) as f:
-        prod_config = yaml.load(f, Loader=yaml.SafeLoader)
-        if prod_config:
-            config = recursive_update(config, prod_config)
+with open(CONFIG_FILE) as f:
+    new_config = yaml.load(f, Loader=yaml.SafeLoader)
+    if new_config:
+        config = recursive_update(config, new_config)
 logger.debug(f"Running with configs: {config}")
 
 if "log_level" in config:
