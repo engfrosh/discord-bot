@@ -35,4 +35,5 @@ module_settings:
     ]
     verify_channel: 1056976121612210306
   robert:
+    updates_message: 1066850169313841253
     updates_channel: 1058616213720281138

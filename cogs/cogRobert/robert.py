@@ -2,6 +2,7 @@ from nextcord.ext import commands
 from nextcord import slash_command, Interaction
 from common_models.models import RobertEntry
 from asgiref.sync import sync_to_async
+from EngFroshBot import is_admin
 
 
 class Robert(commands.Cog):
@@ -13,6 +14,17 @@ class Robert(commands.Cog):
         entry = RobertEntry(user=id, type=type)
         entry.save()
 
+    async def update_message(self, guild):
+        channel = guild.get_channel(self.config["updates_channel"])
+        disc_message = await channel.fetch_message(self.config["updates_message"])
+        message = "**Robert Queue**\n"
+        queue = await sync_to_async(self.get_queue)()
+        for robert in queue:
+            user = guild.get_member(robert.user)
+            message += str(robert.type) + ": " + user.display_name + " : From " + str(robert.created)
+            message += "\n"
+        await disc_message.edit(message)
+
     @slash_command(name="robert_add", description="Adds a robert to the queue")
     async def robert_add(self, i: Interaction, type: int):
         if type > 3 or type < 1:
@@ -20,14 +32,7 @@ class Robert(commands.Cog):
             return
         await sync_to_async(self.robert_add_sync)(type, i.user.id)
         await i.send("You have been added to the queue", ephemeral=True)
-        channel = i.guild.get_channel(self.config['updates_channel'])
-        message = "**Robert Queue**\n"
-        queue = await sync_to_async(self.get_queue)()
-        for robert in queue:
-            user = i.guild.get_member(robert.user)
-            message += str(robert.type) + ": " + user.display_name + " : From " + str(robert.created)
-            message += "\n"
-        await channel.send(message)
+        await self.update_message(i.guild)
 
     def get_queue(self):
         roberts = list(RobertEntry.objects.order_by('-type', 'created'))
@@ -51,19 +56,13 @@ class Robert(commands.Cog):
         user = i.guild.get_member(robert[0])
         mention = user.mention
         await i.send(mention + " : Type " + str(robert[1]) + " : From " + str(robert[2]), ephemeral=True)
+        await self.update_message(i.guild)
 
-    @slash_command(name="robert_queue", description="Gets the whole robert queue")
-    async def robert_queue(self, i: Interaction):
-        queue = await sync_to_async(self.get_queue)()
-        if len(queue) == 0:
-            await i.send("There are no roberts in the queue!", ephemeral=True)
-            return
-        message = ""
-        for robert in queue:
-            user = i.guild.get_member(robert.user)
-            message += str(robert.type) + ": " + user.display_name + " : From " + str(robert.created)
-            message += "\n"
-        await i.send(message, ephemeral=True)
+    @slash_command(name="robert_message", description="Sends a blank robert queue message")
+    @is_admin()
+    async def robert_message(self, i: Interaction):
+        await i.channel.send("Robert")
+        await i.send("Successfully sent message!", ephemeral=True)
 
 
 def setup(bot):
