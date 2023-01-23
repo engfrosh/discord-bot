@@ -19,7 +19,7 @@ modules:
 
 module_settings:
   coin:
-    scoreboard_channel: 1065810690331381851
+    scoreboard_channel: 1067124377365270628
   management:
       pronoun_message: []
       virtual_team_message: []
