@@ -21,8 +21,13 @@ module_settings:
   coin:
     scoreboard_channel: 1067124377365270628
   management:
-      pronoun_message: []
-      virtual_team_message: []
+    pronoun_message: [1068374279189696583]
+    virtual_team_message: []
+    pronouns:
+      he: 1068373217951101008
+      she: 1068373242743623772
+      they: 1068373271508168714
+      ask: 1068373292689391687
   scav:
     team_channels: [
         1067111822643179690,
