@@ -5,12 +5,16 @@ from typing import Optional
 # from typing import List
 from nextcord.ext import commands
 from nextcord import slash_command, Interaction, PermissionOverwrite, TextChannel, Role, Permissions, SlashOption
+from nextcord import Attachment
 import random
 from asgiref.sync import sync_to_async
+import time
 
 from common_models.models import VirtualTeam, RoleInvite
 
 from EngFroshBot import EngFroshBot, is_admin, has_permission, is_superadmin
+import boto3
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger("CogManagement")
 
@@ -308,6 +312,104 @@ class Management(commands.Cog):
 
         await i.send("Successfully created channel!", ephemeral=True)
         return
+
+    DEFAULT_MAGIC_LINK_EMAIL_TEXT = \
+        """Welcome to EngFrosh, Head's Discord!
+    Here is your magic link to log into the Discord server: {link}
+    If you need any help or any questions, please email questions@engfrosh.com"""
+
+    DEFAULT_MAGIC_LINK_EMAIL_HTML = \
+        """<html lang='en'>
+            <body>
+                <h1>Welcome to EngFrosh, Head's Discord!</h1><br/>
+                <p><a href='{link}' >Here</a> is your magic link to log into the Discord server.</p>
+                <br/>
+                <p>If you need any help or any questions,
+                please email <a href="mailto:questions@engfrosh.com">questions@engfrosh.com</a>
+                <br/>
+                <br/>
+                {link}
+                </p>
+            </body>
+        </html>
+        """
+    # Note, google tends to get rid of some link elements.
+    DEFAULT_MAGIC_LINK_EMAIL_SUBJECT = "Welcome to EngFrosh Heads Discord!"
+    SENDER_EMAIL = "noreply@engfrosh.com"
+
+    @slash_command(name="import_users")
+    @is_admin()
+    async def import_users(self, i: Interaction, csv_file: Attachment):
+        await i.response.defer(with_message=True, ephemeral=True)
+        data = await csv_file.read()
+        data = data.decode("UTF-8").split('\n')
+        AWS_REGION = "us-east-2"
+
+        # The character encoding for the email.
+        CHARSET = "UTF-8"
+
+        # Create a new SES resource and specify a region.
+        client = boto3.client('ses', region_name=AWS_REGION)
+        rows = []
+
+        for row in data:
+            if row == "":
+                continue
+            split = row.split(',')
+            name = split[0]
+            role = split[1]
+            email = split[2]
+            role = self.get(i.guild.roles, role.title())
+            if role is None:
+                await i.send("Error: Invalid role!", ephemeral=True)
+                return
+            channel = i.guild.system_channel
+            if channel is None:
+                await i.send("Error: System channel is not configured!", ephemeral=True)
+                return
+            split[1] = role
+            rows += [split]
+        for row in rows:
+            name = row[0]
+            role = row[1]
+            email = row[2]
+            invite = await channel.create_invite(max_uses=2)
+            role_invite = RoleInvite()
+            role_invite.link = invite.id
+            role_invite.role = role.id
+            role_invite.nick = name
+            await sync_to_async(role_invite.save)()
+            url = invite.url
+            try:
+                client.send_email(
+                    Destination={
+                        'ToAddresses': [
+                            email,
+                        ],
+                    },
+                    Message={
+                        'Body': {
+                            'Html': {
+                                'Charset': CHARSET,
+                                'Data': self.DEFAULT_MAGIC_LINK_EMAIL_HTML.format(link=url),
+                            },
+                            'Text': {
+                                'Charset': CHARSET,
+                                'Data': self.DEFAULT_MAGIC_LINK_EMAIL_TEXT.format(link=url),
+                            },
+                        },
+                        'Subject': {
+                            'Charset': CHARSET,
+                            'Data': self.DEFAULT_MAGIC_LINK_EMAIL_SUBJECT,
+                        },
+                    },
+                    Source=self.SENDER_EMAIL
+                )
+                time.sleep(0.1)
+                    
+            except ClientError as e:
+                await i.send(e.response['Error']['Message'], ephemeral=True)
+        await i.send("Sent emails!", ephemeral=True)
 
 
 def setup(bot):
