@@ -278,6 +278,37 @@ class Management(commands.Cog):
         await i.send("Successfully created channel!", ephemeral=True)
         return
 
+    @slash_command(name="create_channel", description="Creates a channel with two roles allowed in it but only named with the first group")
+    @has_permission("common_models.create_channel")
+    async def create_channel(self, i: Interaction, cat: str, roles: str):
+        roles = roles.split()
+        guild = i.guild
+        if len(roles) < 1:
+            await i.send("You must specify at least 1 role!", ephemeral=True)
+            return
+        role1 = roles[0].title()
+
+        category = self.get(guild.categories, cat)
+        if category is None:
+            await i.send("Unable to find a category with that name!", ephemeral=True)
+            return
+        r = []
+        for j in range(len(roles)):
+            r += [self.get(guild.roles, roles[j].title())]
+            if r[j] is None:
+                await i.send("Unable to find a role with the name \""+roles[j]+"\"!", ephemeral=True)
+                return
+        name = roles[0].lower()
+        if self.get(category.text_channels, name) is not None:
+            await i.send("This channel already exists!", ephemeral=True)
+            return
+        overwrites = {guild.default_role: PermissionOverwrite(view_channel=False)}
+        for role in r:
+            overwrites[role] = PermissionOverwrite(view_channel=True)
+        await guild.create_text_channel(name, category=category, overwrites=overwrites)
+
+        await i.send("Successfully created channel!", ephemeral=True)
+        return
 
 def setup(bot):
     """Management COG setup."""
