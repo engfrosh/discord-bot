@@ -406,7 +406,6 @@ class Management(commands.Cog):
                     Source=self.SENDER_EMAIL
                 )
                 time.sleep(0.1)
-                    
             except ClientError as e:
                 await i.send(e.response['Error']['Message'], ephemeral=True)
         await i.send("Sent emails!", ephemeral=True)
