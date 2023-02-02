@@ -3,12 +3,12 @@ import logging
 
 import nextcord
 from nextcord.ext import commands
-from nextcord import slash_command, Interaction, Member, SlashOption, TextChannel, NotFound
+from nextcord import slash_command, Interaction, Member, SlashOption, TextChannel, NotFound, Role
 from nextcord.ui import View, Button
 from typing import Optional
 
 from common_models.models import BooleanSetting, VerificationPhoto, Team, UserDetails, DiscordUser, FroshRole
-from common_models.models import Puzzle, TeamPuzzleActivity, PuzzleGuess
+from common_models.models import Puzzle, TeamPuzzleActivity, PuzzleGuess, DiscordRole
 
 from django.core.files import File
 
@@ -299,12 +299,15 @@ class Scav(commands.Cog):
     def get_team_by_name(self, team_name):
         return Team.objects.filter(display_name__iexact=team_name).first()
 
+    def get_team_by_role(self, role):
+        return Team.objects.filter(group=DiscordRole.objects.filter(role_id=role).first().group).first()
+
     @slash_command(name="scav_lock", description="Lock a team's scav")
     @has_permission("common_models.manage_scav")
-    async def scav_lock(self, i: Interaction, team_name: str, minutes: int = 15):
+    async def scav_lock(self, i: Interaction, team_name: Role, minutes: int = 15):
         """Lock a team's scav"""
 
-        team = await sync_to_async(self.get_team_by_name)(team_name)
+        team = await sync_to_async(self.get_team_by_role)(team_name.id)
         if team is None:
             await i.send("Invalid team", ephemeral=True)
             return
@@ -317,10 +320,10 @@ class Scav(commands.Cog):
 
     @slash_command(name="scav_unlock", description="Unlock a team's scav")
     @has_permission("common_models.manage_scav")
-    async def scav_unlock(self, i: Interaction, team_name: str):
+    async def scav_unlock(self, i: Interaction, team_name: Role):
         """Unlock a team's scav"""
 
-        team = await sync_to_async(self.get_team_by_name)(team_name)
+        team = await sync_to_async(self.get_team_by_role)(team_name.id)
         if team is None:
             await i.send("Invalid team", ephemeral=True)
             return

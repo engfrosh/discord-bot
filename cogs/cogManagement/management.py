@@ -46,6 +46,95 @@ class Management(commands.Cog):
         await i.send("Echod message!", ephemeral=True)
         await i.channel.send(message)
 
+    @slash_command(name="channels", description="Lists all the channels in the server")
+    @is_admin()
+    async def categories(self, i: Interaction):
+        response = "```"
+        for category in i.guild.categories:
+            name = category.name
+            id = category.id
+            response += name + " - " + str(id) + "\nText channels:\n"
+            text_channels = category.text_channels
+            for channel in text_channels:
+                response += "\t" + channel.name + " - " + str(channel.id) + "\n"
+            response += "Voice channels:\n"
+            voice_channels = category.voice_channels
+            for channel in voice_channels:
+                response += "\t" + channel.name + " - " + str(channel.id) + "\n"
+            response += "\n"
+        response += "```"
+        await i.send(response, ephemeral=True)
+
+    @slash_command(name="overwrites", description="Lists the overwrites on a channel")
+    @is_admin()
+    async def overwrites(self, i: Interaction, id):
+        channels = i.guild.text_channels
+        channel = None
+        for c in channels:
+            if c.id == int(id):
+                channel = c
+                break
+        if channel is None:
+            channels = i.guild.voice_channels
+            for c in channels:
+                if c.id == int(id):
+                    channel = c
+                    break
+        if channel is None:
+            await i.send("Cannot find channel!", ephemeral=True)
+            return
+        overwrites = channel.overwrites
+        response = "Overwrites:\n"
+        for role, perms in overwrites.items():
+            tup = perms.pair()
+            view = not tup[1].read_messages
+            send = not tup[1].send_messages
+            response += role.name + " - View: " + str(view) + " - Send: " + str(send) + "\n"
+        await i.send(response, ephemeral=True)
+
+    @slash_command(name="add_overwrite", description="Adds an overwrite for a channel")
+    @is_admin()
+    async def add_overwrite(self, i: Interaction, id, role: Role, name, value):
+        channels = i.guild.text_channels
+        channel = None
+        for c in channels:
+            if c.id == int(id):
+                channel = c
+                break
+        if channel is None:
+            channels = i.guild.voice_channels
+            for c in channels:
+                if c.id == int(id):
+                    channel = c
+                    break
+        if channel is None:
+            await i.send("Cannot find channel!", ephemeral=True)
+            return
+        # This is magic dictionary unpacking from https://stackoverflow.com/a/22384521
+        await channel.set_permissions(role, **{name: bool(value)})
+        await i.send("Successfully changed overwrites!", ephemeral=True)
+
+    @slash_command(name="deleteoverwrite", description="Deletes an overwrite for a channel")
+    @is_admin()
+    async def delete_overwrite(self, i: Interaction, id, role: Role):
+        channels = i.guild.text_channels
+        channel = None
+        for c in channels:
+            if c.id == int(id):
+                channel = c
+                break
+        if channel is None:
+            channels = i.guild.voice_channels
+            for c in channels:
+                if c.id == int(id):
+                    channel = c
+                    break
+        if channel is None:
+            await i.send("Cannot find channel!", ephemeral=True)
+            return
+        await channel.set_permissions(role, overwrite=None)
+        await i.send("Successfully changed overwrites!", ephemeral=True)
+
     @commands.Cog.listener()
     async def on_member_join(self, member):
         guild = member.guild
@@ -173,38 +262,6 @@ class Management(commands.Cog):
         await message.add_reaction("🤚")
         await i.send("Successfully created message!", ephemeral=True)
 
-        return
-
-    @slash_command(name="get_overwrites",
-                   description="Gets the permission overwrites for the current channel")
-    @is_admin()
-    async def get_overwrites(self, i: Interaction, channel_id: Optional[int] = None):
-        """Get all the permission overwrites for the current channel."""
-
-        if i.user.id not in self.config["superadmin"]:  # type: ignore
-            return
-
-        if channel_id:
-            channel = self.bot.get_channel(channel_id)
-            if channel:
-                overwrites = channel.overwrites
-            else:
-                await i.send("error", ephemeral=True)
-                return
-
-        else:
-
-            overwrites = i.channel.overwrites  # type: ignore
-
-        msg = "```\n"
-        for k, v in overwrites.items():
-            msg += f"{k} {k.id}:\n"
-            for p in v:
-                if p[1] is not None:
-                    msg += f"    {p}\n"
-        msg += "```"
-
-        await i.send(msg, ephemeral=True)
         return
 
     @slash_command(name="shutdown",
