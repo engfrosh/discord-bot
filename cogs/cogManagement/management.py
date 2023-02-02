@@ -49,7 +49,6 @@ class Management(commands.Cog):
     @slash_command(name="channels", description="Lists all the channels in the server")
     @is_admin()
     async def categories(self, i: Interaction):
-        response = "```"
         for category in i.guild.categories:
             name = category.name
             id = category.id
@@ -62,12 +61,11 @@ class Management(commands.Cog):
             for channel in voice_channels:
                 response += "\t" + channel.name + " - " + str(channel.id) + "\n"
             response += "\n"
-        response += "```"
         # Stolen from https://stackoverflow.com/a/13673133
-        chunks, chunk_size = len(response), 2000
+        chunks, chunk_size = len(response), 1950
         chunk_list = [response[i:i+chunk_size] for i in range(0, chunks, chunk_size)]
         for c in chunk_list:
-            await i.send(c, ephemeral=True)
+            await i.send("```" + c + "```", ephemeral=True)
 
     @slash_command(name="overwrites", description="Lists the overwrites on a channel")
     @is_admin()
