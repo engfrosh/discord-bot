@@ -49,6 +49,7 @@ class Management(commands.Cog):
     @slash_command(name="channels", description="Lists all the channels in the server")
     @is_admin()
     async def categories(self, i: Interaction):
+        response = ""
         for category in i.guild.categories:
             name = category.name
             id = category.id
