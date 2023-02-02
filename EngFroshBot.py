@@ -106,7 +106,7 @@ class EngFroshBot(commands.Bot):
             await channel.send(file=file)
 
         else:
-            await channel.send(content)
+            await channel.send("```" + content + "```")
 
     def log(self, message: str, level: str = "INFO", exc_info=None, *, print_to_console=False, send_to_discord=True):
         """Log a message to the console, the logger, and the bot channels."""
