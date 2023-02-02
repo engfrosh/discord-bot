@@ -117,6 +117,28 @@ class Management(commands.Cog):
         await channel.set_permissions(role, **{name: bool(value)})
         await i.send("Successfully changed overwrites!", ephemeral=True)
 
+    @slash_command(name="rename", description="Renames a channel")
+    @is_admin()
+    async def rename(self, i: Interaction, id, name):
+        channels = i.guild.text_channels
+        channel = None
+        for c in channels:
+            if c.id == int(id):
+                channel = c
+                break
+        if channel is None:
+            channels = i.guild.voice_channels
+            for c in channels:
+                if c.id == int(id):
+                    channel = c
+                    break
+        if channel is None:
+            await i.send("Cannot find channel!", ephemeral=True)
+            return
+        # This is magic dictionary unpacking from https://stackoverflow.com/a/22384521
+        await channel.edit(name=name)
+        await i.send("Successfully renamed channel!", ephemeral=True)
+
     @slash_command(name="deleteoverwrite", description="Deletes an overwrite for a channel")
     @is_admin()
     async def delete_overwrite(self, i: Interaction, id, role: Role):
