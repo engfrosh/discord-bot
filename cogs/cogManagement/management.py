@@ -168,7 +168,8 @@ class Management(commands.Cog):
         for i in invites:
             role_invite = await sync_to_async(role_invites.filter(link=i.id).first)()
             if i.uses == 1 and role_invite is not None:
-                await member.add_roles(guild.get_role(role_invite.role))
+                for role in role_invite.role.split(","):
+                    await member.add_roles(guild.get_role(role.strip()))
                 await member.edit(nick=role_invite.nick)
                 await sync_to_async(role_invite.delete)()
                 await i.delete()
