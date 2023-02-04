@@ -12,6 +12,8 @@ admin_roles: [
 ]
 guild: 374872527710978048
 
+server: 'http://127.0.0.1:8080/'
+
 module_settings:
   moderation:
     ignored_channels: [

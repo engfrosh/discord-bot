@@ -8,7 +8,7 @@ admin_roles: [
     1055653040935419904
 ]
 
-verify_dir: '/usr/share/engfrosh_site/files/media/verification_photos/'
+server: 'https://mars.engfrosh.com/'
 
 module_settings:
   moderation:

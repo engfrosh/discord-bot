@@ -15,7 +15,10 @@ from django.core.files import File
 from EngFroshBot import EngFroshBot, has_permission
 from asgiref.sync import sync_to_async
 import requests
+from requests.auth import HTTPBasicAuth
 from urllib.parse import urlparse
+import os
+import json
 import uuid
 # endregion
 
@@ -37,6 +40,7 @@ class VerifyButton(Button):
 class Scav(commands.Cog):
     def __init__(self, bot: EngFroshBot):
         self.bot = bot
+        self.server = bot.config["server"]
         self.config = bot.config["module_settings"]["scav"]
 
     def check_scavenger_setting_enabled(self):
@@ -148,7 +152,7 @@ class Scav(commands.Cog):
         if team.scavenger_finished:
             await i.send("You're already finished Scav!", ephemeral=True)
             return False
-        if role.name == "Frosh":
+        if role == "Frosh":
             await i.send("Frosh cannot submit scav answers!", ephemeral=True)
             return False
         return True
@@ -158,6 +162,23 @@ class Scav(commands.Cog):
 
     def get_team_active_puzzles(self, team: Team):
         return team.active_puzzles
+
+    def scav_photo_upload(self, file):
+        url = self.server + "api/photo"
+        files = {'photo': open(file, 'rb')}
+        user = os.environ['SERVER_USER']
+        passwd = os.environ['SERVER_PASS']
+        r = requests.post(url, files=files, auth=HTTPBasicAuth(user, passwd))
+        if r.status_code != 200:
+            return None
+        data = json.loads(r.text)
+        return data['id']
+
+    def get_photo(self, id):
+        return VerificationPhoto.objects.filter(id=id)[0]
+
+    def set_photo(self, activity, photo):
+        activity.verification_photo = photo
 
     @slash_command(name="guess", description="Makes a scav guess")
     @has_permission("common_models.guess_scavenger_puzzle")
@@ -216,18 +237,16 @@ class Scav(commands.Cog):
         if response.status_code != 200:
             await i.send("Failed to open verification image, please resend!", ephemeral=True)
             return
-        photo = VerificationPhoto()
+
         ext = name.split('.')[-1]
         new_name = str(uuid.uuid4())+'.'+ext
-        verify_dir = self.bot.config['verify_dir']
-        verify_prefix = self.bot.config['verify_prefix']
-        with open(verify_dir + new_name, "wb") as f:
+        with open("/tmp/" + new_name, "wb") as f:
             f.write(response.content)
             f.close()
-        photo.photo.name = verify_prefix + new_name  # https://stackoverflow.com/a/66161155
-        await sync_to_async(photo.save)()
+        photo_id = await sync_to_async(self.scav_photo_upload)("/tmp/" + new_name)
+        photo = await sync_to_async(self.get_photo)(photo_id)
 
-        activity.verification_photo = photo
+        await sync_to_async(self.set_photo)(activity, photo)
         await sync_to_async(activity.save)()
         await sync_to_async(activity.mark_completed)()
 

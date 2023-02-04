@@ -8,7 +8,7 @@ admin_roles: [
     1065810471313211492
 ]
 
-verify_dir: '/usr/share/engfrosh_site/files/media/verification_photos/'
+server: 'https://heads.engfrosh.com/'
 
 modules:
   cogs: [
