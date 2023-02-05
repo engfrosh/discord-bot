@@ -185,7 +185,7 @@ class Management(commands.Cog):
         invite = await channel.create_invite(max_uses=2)
         role_invite = RoleInvite()
         role_invite.link = invite.id
-        role_invite.role = role.id
+        role_invite.role = str(role.id)
         role_invite.nick = nick
         await sync_to_async(role_invite.save)()
         await i.send(invite.url, ephemeral=True)
@@ -462,7 +462,7 @@ class Management(commands.Cog):
             invite = await channel.create_invite(max_uses=2)
             role_invite = RoleInvite()
             role_invite.link = invite.id
-            role_invite.role = role.id
+            role_invite.role = str(role.id)
             role_invite.nick = name
             await sync_to_async(role_invite.save)()
             url = invite.url
