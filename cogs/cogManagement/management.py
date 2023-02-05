@@ -399,7 +399,8 @@ class Management(commands.Cog):
     DEFAULT_MAGIC_LINK_EMAIL_TEXT = \
         """Welcome to EngFrosh, Head's Discord!
     Here is your magic link to log into the Discord server: {link}
-    If you need any help or any questions, please email questions@engfrosh.com"""
+    You will receive more information from your group co shortly.
+    If you need any help or any questions, please email directors@engfrosh.com"""
 
     DEFAULT_MAGIC_LINK_EMAIL_HTML = \
         """<html lang='en'>
@@ -407,8 +408,10 @@ class Management(commands.Cog):
                 <h1>Welcome to EngFrosh, Head's Discord!</h1><br/>
                 <p><a href='{link}' >Here</a> is your magic link to log into the Discord server.</p>
                 <br/>
+                <p>You will receive more information from your group co shortly.</p>
+                <br/>
                 <p>If you need any help or any questions,
-                please email <a href="mailto:questions@engfrosh.com">questions@engfrosh.com</a>
+                please email <a href="mailto:directors@engfrosh.com">directorss@engfrosh.com</a>
                 <br/>
                 <br/>
                 {link}
