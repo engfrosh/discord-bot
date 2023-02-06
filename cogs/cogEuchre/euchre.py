@@ -18,7 +18,7 @@ class Euchre(commands.Cog):
     def shuffle(self, players):
         deck = []
         for suit in "HDCS":
-            for rank in range(7, 15):  # Ace is 14 and 7 is 7
+            for rank in range(9, 15):  # Ace is 14 and 9 is 9
                 deck += [(suit, rank)]
         for i in range(len(players)):
             for index in range(5):  # Deal 5 cards to each player
@@ -178,10 +178,6 @@ class Euchre(commands.Cog):
             game.trump = card_value.suit
             game.selector = game.next_dealer
             game.save()
-            card_value.played = True
-            card_value.save()
-            game.extra_card.player = player
-            game.extra_card.save()
             trick.opener = None
             trick.selection = False
             trick.save()
