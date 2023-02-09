@@ -45,7 +45,7 @@ class Management(commands.Cog):
         name = pronoun.title()
         role = self.get(i.guild.roles, name)
         if role is None:
-            role = await i.guild.create_role(name, reason="New pronoun role")
+            role = await i.guild.create_role(name=name, reason="New pronoun role")
         if role.permissions.value != 0:
             # Checks if the role has any perms attached
             # This way people can't give admin as a pronoun
