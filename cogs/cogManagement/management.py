@@ -16,6 +16,8 @@ from EngFroshBot import EngFroshBot, is_admin, has_permission, is_superadmin
 import boto3
 from botocore.exceptions import ClientError
 
+import cogs.cogManagement.utils as utils
+
 logger = logging.getLogger("CogManagement")
 
 
@@ -218,63 +220,18 @@ class Management(commands.Cog):
 
         if user_id == self.bot.user.id:
             return
+        for message in await sync_to_async(utils.get_messages)("pronoun"):
+            if message_id == message.id:
+                await sync_to_async(utils.discord_add_pronoun)(emoji.name, user_id)
+                new_name = await sync_to_async(utils.compute_discord_name)(user_id)
+                await member.edit(nick=new_name)
+                break
 
-        if message_id in self.config["pronoun_message"]:
-            guild = self.bot.get_guild(self.bot.config["guild"])
-            if not guild:
-                await self.bot.error(f"Could not get guild {self.bot.config['guild']}")
-                return
-            if emoji.name == "1️⃣":
-                role = guild.get_role(self.config["pronouns"]["he"])
-                await member.add_roles(role)
-            elif emoji.name == "2️⃣":
-                role = guild.get_role(self.config["pronouns"]["she"])
-                await member.add_roles(role)
-            elif emoji.name == "3️⃣":
-                role = guild.get_role(self.config["pronouns"]["they"])
-                await member.add_roles(role)
-            elif emoji.name == "4️⃣":
-                role = guild.get_role(self.config["pronouns"]["ask"])
-                await member.add_roles(role)
-            else:
-                await self.bot.log(
-                    f"Channel: {channel_id} Emoji: {emoji} user_id: {user_id} reaction_type: {reaction_type}")
-                return
-
-        elif message_id in self.config["virtual_team_message"]:
-            virtual_teams = await self.bot.db_int.get_all_virtual_teams()
-            virtual_team_ids = [vt.role_id for vt in virtual_teams]
-            if any([role.id in virtual_team_ids for role in member.roles]):
-                await member.send("You are already part of a virtual team!")
-                return
-
-            guild = self.bot.get_guild(self.bot.config["guild"])
-            if not guild:
-                await self.bot.error("Could not get guild.")
-                return
-
-            allowed_teams = []
-            for vt in virtual_teams:
-                if vt.num_member < self.config["num_members_per_team"]:
-                    allowed_teams.append(vt)
-
-            num_added = 0
-            while len(allowed_teams) < 2:
-                team_name = f"VTeam {len(virtual_teams) + 1 + num_added}"
-                new_role = await guild.create_role(name=team_name)
-                await self.bot.db_int.create_virtual_team(new_role.id)
-                allowed_teams.append(VirtualTeam(new_role.id, 0))
-                num_added += 1
-
-            role = guild.get_role(random.choice(allowed_teams).role_id)
-            await member.add_roles(role)
-
-            await self.bot.db_int.increment_virtual_team_count(role.id)
-            await member.send(f"You've been added to virtual team {role.name}")
-
-            return
-
-        return
+    @slash_command(name="pronoun_create", description="Creates a pronoun option")
+    @is_admin()
+    async def pronoun_create(self, i: Interaction, name: str, emote: str):
+        await sync_to_async(utils.create_pronoun)(name, emote)
+        await i.send("Successfully created pronoun", ephemeral=True)
 
     @slash_command(name="pronoun_message",
                    description="Sends a message to this channel for users to select their pronouns")
@@ -282,28 +239,22 @@ class Management(commands.Cog):
     async def send_pronoun_message(self, i: Interaction):
         """Send pronoun message in this channel."""
 
-        message = await i.channel.send(
-            "Select your pronouns:\n:one: He/Him\n:two: She/Her\n:three: They/Them\n:four: Ask Me")
+        text = await sync_to_async(utils.create_discord_pronoun_message)()
+        message = await i.channel.send(text)
 
-        await message.add_reaction("1️⃣")
-        await message.add_reaction("2️⃣")
-        await message.add_reaction("3️⃣")
-        await message.add_reaction("4️⃣")
+        for emote in await sync_to_async(utils.get_pronoun_emotes)():
+            await message.add_reaction(emote)
+        await sync_to_async(utils.register_message)("pronoun", message.id)
+
         await i.send("Successfully created message!", ephemeral=True)
         return
 
-    @slash_command(name="virtual_team_message",
-                   description="Sends a message to this channel for users to join virtual teams")
+    @slash_command(name="create_user", description="Creates a user")
     @is_admin()
-    async def send_virtual_team_message(self, i: Interaction):
-        """Send virtual team message in this channel."""
-
-        message = await i.channel.send("React to this message to join a virtual team.")
-
-        await message.add_reaction("🤚")
-        await i.send("Successfully created message!", ephemeral=True)
-
-        return
+    async def create_user(self, i: Interaction, user: Member, first_name: str, last_name: str):
+        await sync_to_async(utils.create_discord_user)(first_name, last_name, user.id,
+                                                       user.name, user.discriminator)
+        await i.send("Created user in DB!", ephemeral=True)
 
     @slash_command(name="shutdown",
                    description="Shuts off the discord bot")
