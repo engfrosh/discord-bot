@@ -6,11 +6,10 @@ from typing import Optional
 from nextcord.ext import commands
 from nextcord import slash_command, Interaction, PermissionOverwrite, TextChannel, Role, Permissions, SlashOption
 from nextcord import Attachment, Member
-import random
 from asgiref.sync import sync_to_async
 import time
 
-from common_models.models import VirtualTeam, RoleInvite
+from common_models.models import RoleInvite
 
 from EngFroshBot import EngFroshBot, is_admin, has_permission, is_superadmin
 import boto3
@@ -211,11 +210,9 @@ class Management(commands.Cog):
     async def on_raw_reaction_add(self, payload):
         """On raw reaction add handling."""
 
-        channel_id = payload.channel_id
         emoji = payload.emoji
         user_id = payload.user_id
         member = payload.member
-        reaction_type = payload.event_type
         message_id = payload.message_id
 
         if user_id == self.bot.user.id:
