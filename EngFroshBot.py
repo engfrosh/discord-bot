@@ -65,6 +65,8 @@ def has_permission(perm):
         if user in superadmin:
             return True
         discord_user = DiscordUser.objects.filter(id=user).first()
+        if discord_user is None:
+            return False  # User account isn't linked
         user_model = discord_user.user
         if user_model.is_superuser:
             return True
