@@ -20,7 +20,6 @@ modules:
 module_settings:
   coin:
     scoreboard_channel: 1067124377365270628
-  management:
   scav:
     team_channels: [
         1067111822643179690,

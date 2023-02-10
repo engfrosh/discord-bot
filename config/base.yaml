@@ -21,20 +21,6 @@ verify_prefix: 'verification_photos/'
 timezone: America/Toronto
 
 module_settings:
-  moderation:
-    checkmark: True
-    reply:
-      channel: True
-      dm: True
-
-    additional_words: [
-      "uottawa"
-    ]
-    regex_profanity: '$^'
-
-    report_message: "{author} sent a message to channel {channel} that broke the moderation rules:\n\n||{content}||"
-    profanity_message: "Your message is not appropriate. It has been deleted from the channel and sent to the moderation team."
-
   coin:
     public_commands: True
     public_confirmations: True

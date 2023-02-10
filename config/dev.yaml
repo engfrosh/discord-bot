@@ -23,7 +23,6 @@ module_settings:
     report_channel: 1056676513363263499
   coin:
     scoreboard_channel: 1056676601837928468
-  management:
   scav:
     team_channels: [
         1056696565533786162
