@@ -219,10 +219,14 @@ class Management(commands.Cog):
             return
         for message in await sync_to_async(utils.get_messages)("pronoun"):
             if message_id == message.id:
-                await sync_to_async(utils.discord_add_pronoun)(emoji.name, user_id)
-                new_name = await sync_to_async(utils.compute_discord_name)(user_id)
-                await member.edit(nick=new_name)
-                break
+                try:
+                    await sync_to_async(utils.discord_add_pronoun)(emoji.name, user_id)
+                    new_name = await sync_to_async(utils.compute_discord_name)(user_id)
+                    await member.edit(nick=new_name)
+                    break
+                except e:
+                    logging.error("Failed to add pronoun to user " + member.name)
+                    logging.error(e)
 
     @slash_command(name="pronoun_create", description="Creates a pronoun option")
     @is_admin()
@@ -327,6 +331,15 @@ class Management(commands.Cog):
 
         await i.send("Successfully created channel!", ephemeral=True)
         return
+
+    @slash_command(name="rename_all", description="Renames all users in the discord server")
+    @is_admin()
+    async def rename_all(self, i: Interaction):
+        await i.defer()
+        for m in i.guild.members:
+            name = await sync_to_async(utils.compute_discord_name)(m.id)
+            await m.edit(nick=name)
+        await i.send("Reset all users nicks", ephemeral=True)
 
     @slash_command(name="create_channel",
                    description="Creates a channel with two roles allowed in it but only named with the first group")

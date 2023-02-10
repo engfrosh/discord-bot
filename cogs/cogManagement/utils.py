@@ -23,6 +23,8 @@ def compute_discord_name(user_id: int):
     if len(pronouns) > 0:
         name += " ("
         for i in range(len(pronouns)-1):
+            if len(name + pronouns[i].name + " ") > 31:
+                break
             name += pronouns[i].name + " "
         name += pronouns[len(pronouns)-1].name + ")"
     return name
@@ -72,7 +74,12 @@ def discord_add_pronoun(emote, id):
         return False
     user = disc_user.user
     details = md.UserDetails.objects.filter(user=user).first()
-    pronoun = md.PronounOption.objects.filter(emote=emote).first()
+    pronouns = md.PronounOption.objects.all()
+    pronoun = None
+    for p in pronouns:
+        if p.emote == emote:
+            pronoun = p
+            break
     if pronoun is None:
         return False
     for p in details.pronouns:
