@@ -230,7 +230,7 @@ class Management(commands.Cog):
         await sync_to_async(utils.create_pronoun)(name, emote)
         await i.send("Successfully created pronoun", ephemeral=True)
 
-    @slash_command(name="pronoun_message",
+    @slash_command(name="send_pronoun_message",
                    description="Sends a message to this channel for users to select their pronouns")
     @is_admin()
     async def send_pronoun_message(self, i: Interaction):
