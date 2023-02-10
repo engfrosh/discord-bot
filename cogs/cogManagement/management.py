@@ -5,7 +5,7 @@ from typing import Optional
 # from typing import List
 from nextcord.ext import commands
 from nextcord import slash_command, Interaction, PermissionOverwrite, TextChannel, Role, Permissions, SlashOption
-from nextcord import Attachment
+from nextcord import Attachment, Member
 import random
 from asgiref.sync import sync_to_async
 import time
@@ -39,6 +39,21 @@ class Management(commands.Cog):
             await i.send("Cannot purge this channel type.", ephemeral=True)
 
         return
+
+    @slash_command(name="pronoun", description="Adds a pronoun to a user")
+    async def pronoun(self, i: Interaction, user: Member, pronoun: str):
+        name = pronoun.title()
+        role = self.get(i.guild.roles, name)
+        if role is None:
+            role = await i.guild.create_role(name=name, reason="New pronoun role")
+        if role.permissions.value != 0:
+            # Checks if the role has any perms attached
+            # This way people can't give admin as a pronoun
+            await i.send("Unable to assign this user a pronoun role that has permissions!" +
+                         "Please contact planning if this is an error!", ephemeral="True")
+            return
+        await user.add_roles(role, reason="Adding user pronoun")
+        await i.send("Added user pronoun!", ephemeral=True)
 
     @slash_command(name="echo", description="Echos messages back from the bot")
     @is_admin()
