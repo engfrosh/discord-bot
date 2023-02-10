@@ -335,7 +335,7 @@ class Management(commands.Cog):
     @slash_command(name="rename_all", description="Renames all users in the discord server")
     @is_admin()
     async def rename_all(self, i: Interaction):
-        await i.defer()
+        await i.response.defer(with_message=True, ephemeral=True)
         for m in i.guild.members:
             name = await sync_to_async(utils.compute_discord_name)(m.id)
             await m.edit(nick=name)
