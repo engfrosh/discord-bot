@@ -224,7 +224,7 @@ class Management(commands.Cog):
                     new_name = await sync_to_async(utils.compute_discord_name)(user_id)
                     await member.edit(nick=new_name)
                     break
-                except e:
+                except Exception as e:
                     logging.error("Failed to add pronoun to user " + member.name)
                     logging.error(e)
 
@@ -338,7 +338,11 @@ class Management(commands.Cog):
         await i.response.defer(with_message=True, ephemeral=True)
         for m in i.guild.members:
             name = await sync_to_async(utils.compute_discord_name)(m.id)
-            await m.edit(nick=name)
+            if m.display_name != name:
+                try:
+                    await m.edit(nick=name)
+                except Exception as e:
+                    logger.error(e)
         await i.send("Reset all users nicks", ephemeral=True)
 
     @slash_command(name="create_channel",
