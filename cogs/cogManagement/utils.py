@@ -10,6 +10,15 @@ def add_pronoun(name: str, order: int, user: User):
     pronoun.save()
 
 
+def remove_pronoun(name: str, user: User):
+    name = name.title()
+    pronoun = md.Pronoun.objects.filter(user=user, name=name).first()
+    if pronoun is None:
+        return False
+    pronoun.delete()
+    return True
+
+
 def compute_discord_name(user_id: int):
     disc_user = md.DiscordUser.objects.filter(id=user_id).first()
     if disc_user is None:
@@ -68,7 +77,7 @@ def get_pronoun_emotes() -> list[str]:
     return results
 
 
-def discord_add_pronoun(emote, id):
+def discord_pronoun_generic(emote, id, add: bool):
     disc_user = md.DiscordUser.objects.filter(id=id).first()
     if disc_user is None:
         return False
@@ -82,11 +91,22 @@ def discord_add_pronoun(emote, id):
             break
     if pronoun is None:
         return False
-    for p in details.pronouns:
-        if p.name == pronoun.name:
-            return False
-    add_pronoun(pronoun.name, details.next_pronoun, user)
+    if add:
+        for p in details.pronouns:
+            if p.name == pronoun.name:
+                return False
+        add_pronoun(pronoun.name, details.next_pronoun, user)
+    else:
+        remove_pronoun(pronoun.name, user)
     return True
+
+
+def discord_add_pronoun(emote, id):
+    return discord_pronoun_generic(emote, id, True)
+
+
+def discord_remove_pronoun(emote, id):
+    return discord_pronoun_generic(emote, id, False)
 
 
 def register_message(type: str, id: int):
@@ -103,3 +123,18 @@ def create_pronoun(name: str, emote: str):
     opt = md.PronounOption(name=name, emote=emote)
     opt.save()
     return opt
+
+
+def discord_override_name(user_id, nick):
+    disc_user = md.DiscordUser.objects.filter(id=user_id).first()
+    if disc_user is None:
+        return False
+    user = disc_user.user
+    details = md.UserDetails.objects.filter(user=user).first()
+    details.override_nick = nick
+    details.save()
+    return True
+
+
+def discord_clear_name(user_id):
+    return discord_override_name(user_id, None)

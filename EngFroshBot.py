@@ -6,6 +6,7 @@ import asyncio
 import io
 from typing import Any, Dict, Optional, Set
 import nextcord
+from nextcord import Interaction
 from nextcord.ext import commands, application_checks
 from nextcord.utils import get
 from nextcord.errors import ApplicationCheckFailure
@@ -147,6 +148,17 @@ class EngFroshBot(commands.Bot):
         trace = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
         msg = f'Ignoring exception in command {context.command}:\n{trace}'
         self.log(msg, "EXCEPTION")
+
+    async def on_interaction(self, i: Interaction):
+        data = i.data
+        user = i.user
+        channel = i.channel
+        guild = i.guild
+        message = user.display_name + " #" + guild.name + "-" + channel.name + " Data:: "
+        for key, value in data.items():
+            message += " " + str(key) + ": " + str(value) + ","
+        self.info(message + "\n", send_to_discord=False)
+        await self.process_application_commands(i)
 
     async def on_application_command_error(self, i: nextcord.Interaction, exception: Exception):
         if isinstance(exception, ApplicationCheckFailure):

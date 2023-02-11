@@ -41,20 +41,53 @@ class Management(commands.Cog):
 
         return
 
-    @slash_command(name="pronoun", description="Adds a pronoun to a user")
-    async def pronoun(self, i: Interaction, user: Member, pronoun: str):
-        name = pronoun.title()
-        role = self.get(i.guild.roles, name)
-        if role is None:
-            role = await i.guild.create_role(name=name, reason="New pronoun role")
-        if role.permissions.value != 0:
-            # Checks if the role has any perms attached
-            # This way people can't give admin as a pronoun
-            await i.send("Unable to assign this user a pronoun role that has permissions!" +
-                         "Please contact planning if this is an error!", ephemeral="True")
+    @slash_command(name="add_pronoun", description="Adds a pronoun to a user")
+    async def add_pronoun(self, i: Interaction, user: Member, emoji: str):
+        try:
+            await sync_to_async(utils.discord_add_pronoun)(emoji, user.id)
+            new_name = await sync_to_async(utils.compute_discord_name)(user.id)
+            await user.edit(nick=new_name)
+        except Exception as e:
+            self.bot.log("Failed to add pronoun to user " + user.name, level="ERROR")
+            self.bot.log(e, level="ERROR")
+            await i.send("Failed to add pronoun!", ephemeral=True)
             return
-        await user.add_roles(role, reason="Adding user pronoun")
         await i.send("Added user pronoun!", ephemeral=True)
+
+    @slash_command(name="remove_pronoun", description="Removes a pronoun from a user")
+    async def remove_pronoun(self, i: Interaction, user: Member, emoji: str):
+        try:
+            await sync_to_async(utils.discord_remove_pronoun)(emoji, user.id)
+            new_name = await sync_to_async(utils.compute_discord_name)(user.id)
+            await user.edit(nick=new_name)
+        except Exception as e:
+            self.bot.log("Failed to remove pronoun from user " + user.name, level="ERROR")
+            self.bot.log(e, level="ERROR")
+            await i.send("Failed to remove pronoun!", ephemeral=True)
+            return
+        await i.send("Removed user pronoun!", ephemeral=True)
+
+    @slash_command(name="change_nick", description="Changed a user's nickname. Warning: Disables pronouns")
+    @is_admin()
+    async def change_nick(self, i: Interaction, user: Member, name: str):
+        result = await sync_to_async(utils.discord_override_name)(user.id, name)
+        if not result:
+            await i.send("Failed to change name!", ephemeral=True)
+            return
+        await user.edit(nick=name)
+        await i.send("Changed nickname!", ephemeral=True)
+
+    @slash_command(name="clear_nick", description="Resets a user's nickname to the BOT's default")
+    @is_admin()
+    async def clear_nick(self, i: Interaction, user: Member):
+        result = await sync_to_async(utils.discord_clear_name)(user.id)
+        if not result:
+            await i.send("Failed to clear name!", ephemeral=True)
+            return
+        new_name = await sync_to_async(utils.compute_discord_name)(user.id)
+        await user.edit(nick=new_name)
+
+        await i.send("Cleared nickname!", ephemeral=True)
 
     @slash_command(name="echo", description="Echos messages back from the bot")
     @is_admin()
@@ -223,10 +256,35 @@ class Management(commands.Cog):
                     await sync_to_async(utils.discord_add_pronoun)(emoji.name, user_id)
                     new_name = await sync_to_async(utils.compute_discord_name)(user_id)
                     await member.edit(nick=new_name)
+                    self.bot.info("Added pronoun to user " + member.name + " -> " + new_name, send_to_discord=False)
                     break
                 except Exception as e:
-                    logging.error("Failed to add pronoun to user " + member.name)
-                    logging.error(e)
+                    self.bot.log("Failed to add pronoun to user " + member.name, level="ERROR",)
+                    self.bot.log(e, level="ERROR")
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload):
+        """On raw reaction remove handling."""
+
+        emoji = payload.emoji
+        user_id = payload.user_id
+        guild = self.bot.get_guild(self.bot.config['guild'])
+        member = guild.get_member(user_id)
+        message_id = payload.message_id
+
+        if user_id == self.bot.user.id:
+            return
+        for message in await sync_to_async(utils.get_messages)("pronoun"):
+            if message_id == message.id:
+                try:
+                    await sync_to_async(utils.discord_remove_pronoun)(emoji.name, user_id)
+                    new_name = await sync_to_async(utils.compute_discord_name)(user_id)
+                    await member.edit(nick=new_name)
+                    self.bot.info("Removed pronoun from user " + member.name + " -> " + new_name, send_to_discord=False)
+                    break
+                except Exception as e:
+                    self.bot.log("Failed to remove pronoun from user " + member.name, level="ERROR")
+                    self.bot.log(e, level="ERROR")
 
     @slash_command(name="pronoun_create", description="Creates a pronoun option")
     @is_admin()
@@ -240,6 +298,7 @@ class Management(commands.Cog):
     async def send_pronoun_message(self, i: Interaction):
         """Send pronoun message in this channel."""
 
+        await i.response.defer(with_message=True, ephemeral=True)
         text = await sync_to_async(utils.create_discord_pronoun_message)()
         message = await i.channel.send(text)
 
