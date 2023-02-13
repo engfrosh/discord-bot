@@ -8,8 +8,9 @@ from nextcord import slash_command, Interaction, PermissionOverwrite, TextChanne
 from nextcord import Attachment, Member
 from asgiref.sync import sync_to_async
 import time
+from django.contrib.auth import Permission
 
-from common_models.models import RoleInvite
+from common_models.models import RoleInvite, DiscordUser
 
 from EngFroshBot import EngFroshBot, is_admin, has_permission, is_superadmin
 import boto3
@@ -66,6 +67,23 @@ class Management(commands.Cog):
             await i.send("Failed to remove pronoun!", ephemeral=True)
             return
         await i.send("Removed user pronoun!", ephemeral=True)
+
+    def add_perm_sync(self, id, perm):
+        disc_user = DiscordUser.objects.filter(id=id).first()
+        if disc_user is None:
+            return False
+        user = disc_user.user
+        user.user_permissions.add(Permission.objects.filter(codename=perm).first())
+        return True
+
+    @slash_command(name="add_perm", description="Adds a permission to a user")
+    @is_admin()
+    async def add_perm(self, i: Interaction, user: Member, perm: str):
+        status = await sync_to_async(self.add_perm_sync)(user.id, perm)
+        if status:
+            await i.send("Added permission", ephemeral=True)
+        else:
+            await i.send("Failed to add permission", ephemeral=True)
 
     @slash_command(name="change_nick", description="Changed a user's nickname. Warning: Disables pronouns")
     @is_admin()
