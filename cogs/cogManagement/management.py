@@ -8,7 +8,7 @@ from nextcord import slash_command, Interaction, PermissionOverwrite, TextChanne
 from nextcord import Attachment, Member
 from asgiref.sync import sync_to_async
 import time
-from django.contrib.auth import Permission
+from django.contrib.auth.models import Permission
 
 from common_models.models import RoleInvite, DiscordUser
 
