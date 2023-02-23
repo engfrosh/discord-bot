@@ -1,0 +1,23 @@
+# These settings are only for settings that will not need to be changed while running
+
+bot_log_channel: 1078120723773653094
+
+guild: 1077815445488414772
+
+admin_roles: [
+    1078120808779612290
+]
+
+server: 'https://nem.mycses.ca/'
+
+modules:
+  cogs: [
+    "cogs.cogScav.scav",
+    "cogs.cogManagement.management",
+    ]
+
+module_settings:
+  scav:
+    team_channels: [
+    ]
+    verify_channel: 1078121041408307210
