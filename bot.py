@@ -142,7 +142,8 @@ async def on_ready():
     """Runs on client start"""
 
     client.info(f"Logged on as {client.user}")
-    await client.change_presence(activity=nextcord.Game(name="Welcome to EngFrosh!", type=1, url="mars.engfrosh.com"))
+    await client.change_presence(activity=nextcord.Game(name="Welcome to National Engineering Month!",
+                                                        type=1, url="nem.mycses.ca"))
 
 # endregion
 client.run(bot_token)
