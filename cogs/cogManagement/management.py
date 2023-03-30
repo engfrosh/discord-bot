@@ -8,7 +8,7 @@ from nextcord import slash_command, Interaction, PermissionOverwrite, TextChanne
 from nextcord import Attachment, Member
 from asgiref.sync import sync_to_async
 import time
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Permission, Group
 
 from common_models.models import RoleInvite, DiscordUser
 
@@ -73,7 +73,10 @@ class Management(commands.Cog):
         if disc_user is None:
             return False
         user = disc_user.user
-        user.user_permissions.add(Permission.objects.filter(codename=perm).first())
+        perm = Permission.objects.filter(codename=perm).first()
+        if perm is None:
+            return False
+        user.user_permissions.add(perm)
         return True
 
     @slash_command(name="add_perm", description="Adds a permission to a user")
@@ -84,6 +87,49 @@ class Management(commands.Cog):
             await i.send("Added permission", ephemeral=True)
         else:
             await i.send("Failed to add permission", ephemeral=True)
+
+    def add_perm_group_sync(self, group, perm):
+        g = Group.objects.get(name=group)
+        if g is None:
+            return False
+        perm = Permission.objects.filter(codename=perm).first()
+        if perm is None:
+            return False
+        g.permissions.add(perm)
+        return True
+
+    @slash_command(name="add_group_perm", description="Adds a permission to a group")
+    @is_admin()
+    async def add_group_perm(self, i: Interaction, group: str, perm: str):
+        status = await sync_to_async(self.add_perm_group_sync)(group, perm)
+        if status:
+            await i.send("Added permission", ephemeral=True)
+        else:
+            await i.send("Failed to add permission", ephemeral=True)
+
+    def add_group_sync(self, ids, group):
+        g = Group.objects.get(name=group)
+        if g is None:
+            return False
+        for id in ids:
+            disc_user = DiscordUser.objects.filter(id=id).first()
+            if disc_user is None:
+                continue
+            user = disc_user.user
+            g.user_set.add(user)
+        return True
+
+    @slash_command(name="add_group", description="Adds a group to all users in a role or a specific user")
+    @is_admin()
+    async def add_group(self, i: Interaction, users: Role, group: str):
+        ids = []
+        for member in users.members:
+            ids += [member.id]
+        status = await sync_to_async(self.add_group_sync)(ids, group)
+        if status:
+            await i.send("Added group", ephemeral=True)
+        else:
+            await i.send("Failed to add group", ephemeral=True)
 
     @slash_command(name="change_nick", description="Changed a user's nickname. Warning: Disables pronouns")
     @is_admin()
