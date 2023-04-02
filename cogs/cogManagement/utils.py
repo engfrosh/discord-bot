@@ -42,7 +42,7 @@ def compute_discord_name(user_id: int):
 def create_discord_user(first, last, id, username, discriminator):
     name = first + " " + last
     db_username = name.replace(" ", "_") + "-" + "".join(random.choice(string.ascii_letters + string.digits)
-                                                      for i in range(8))
+                                                         for i in range(8))
     user = User(first_name=first, last_name=last, username=db_username)
     user.save()
     details = md.UserDetails(user=user, name=name)
