@@ -427,7 +427,7 @@ class Management(commands.Cog):
         await sync_to_async(Group.objects.create)(name=name)
         await i.send("Created backend group!", ephemeral=True)
 
-    @slash_command(name="create_group", description="Creates a channel with two roles allowed in it")
+    @slash_command(name="create_group", description="Creates a channel with several roles allowed in it")
     @has_permission("common_models.create_channel")
     async def create_group(self, i: Interaction, roles: str):
         roles = roles.split()
