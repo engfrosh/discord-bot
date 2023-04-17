@@ -42,6 +42,14 @@ class Management(commands.Cog):
 
         return
 
+    @slash_command(name="add_role_to_role", description="Adds a role to every user with a role")
+    @is_admin()
+    async def add_role_to_role(self, i: Interaction, target_role: Role, add_role: Role):
+        members = target_role.members
+        for member in members:
+            await member.add_roles(add_role)
+        await i.send("Added role to all users with a role", ephemeral=True)
+
     @slash_command(name="add_pronoun", description="Adds a pronoun to a user")
     async def add_pronoun(self, i: Interaction, user: Member, emoji: str):
         try:
