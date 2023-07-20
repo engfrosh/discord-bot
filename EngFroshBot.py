@@ -170,6 +170,12 @@ class EngFroshBot(commands.Bot):
             msg = f'Ignoring exception in command {i.application_command}:\n{trace}'
             self.log(msg, "ERROR")
 
+    async def on_message(self, message):
+        if message.author.bot:
+            return
+        if "fish" in message.content.lower():
+            await message.reply("https://www.youtube.com/watch?v=whnZSnW3XsI")
+
     def error(self, message, *, exc_info=None, **kwargs):
         self.log(message, "ERROR", exc_info=exc_info, **kwargs)
 
