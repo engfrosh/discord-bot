@@ -10,7 +10,8 @@ from asgiref.sync import sync_to_async
 import time
 from django.contrib.auth.models import Permission, Group
 
-from common_models.models import RoleInvite, DiscordUser
+from common_models.models import RoleInvite, DiscordUser, FroshRole
+from django.contrib.auth.models import User
 
 from EngFroshBot import EngFroshBot, is_admin, has_permission, is_superadmin
 import boto3
@@ -41,6 +42,26 @@ class Management(commands.Cog):
             await i.send("Cannot purge this channel type.", ephemeral=True)
 
         return
+
+    def get_all_non_planning(self):
+        users = list(User.objects.filter(is_staff=False))
+        planning = FroshRole.objects.filter(name="Planning").group
+        discords = list()
+        for user in users:
+            obj = DiscordUser.objects.filter(user=user).first()
+            if planning not in user.groups and obj is not None:
+                discords += obj.id
+        return discords
+
+    @slash_command(name="kick_all", description="Kicks all non planning users")
+    @is_admin()
+    async def kick_all(self, i: Interaction, target_role: Role, add_role: Role):
+        await i.response.defer()
+        non_planning = await sync_to_async(self.get_all_non_planning)()
+        guild = i.guild
+        for user in non_planning:
+            await guild.get_member(user).kick(reason="Frosh is over!")
+        await i.send("Kicked all users!", ephemeral=True)
 
     @slash_command(name="add_role_to_role", description="Adds a role to every user with a role")
     @is_admin()
