@@ -15,6 +15,7 @@ import datetime as dt
 import traceback
 from common_models.models import DiscordUser
 from asgiref.sync import sync_to_async
+from random import randrange
 
 logger = logging.getLogger("EngFroshBot")
 
@@ -174,7 +175,8 @@ class EngFroshBot(commands.Bot):
         if message.author.bot:
             return
         if "fish" in message.content.lower():
-            await message.reply("https://www.youtube.com/watch?v=whnZSnW3XsI")
+            if randrange(6) == 5:
+                await message.reply("https://www.youtube.com/watch?v=whnZSnW3XsI")
 
     def error(self, message, *, exc_info=None, **kwargs):
         self.log(message, "ERROR", exc_info=exc_info, **kwargs)
