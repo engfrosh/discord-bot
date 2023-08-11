@@ -175,7 +175,7 @@ class EngFroshBot(commands.Bot):
         if message.author.bot:
             return
         if "fish" in message.content.lower():
-            if randrange(6) == 5:
+            if randrange(6) == 5 and message.channel.id == 1139701119010996344:
                 await message.reply("https://www.youtube.com/watch?v=whnZSnW3XsI")
 
     def error(self, message, *, exc_info=None, **kwargs):
