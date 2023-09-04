@@ -55,7 +55,7 @@ class Management(commands.Cog):
 
     @slash_command(name="kick_all", description="Kicks all non planning users")
     @is_admin()
-    async def kick_all(self, i: Interaction, target_role: Role, add_role: Role):
+    async def kick_all(self, i: Interaction):
         await i.response.defer()
         non_planning = await sync_to_async(self.get_all_non_planning)()
         guild = i.guild
