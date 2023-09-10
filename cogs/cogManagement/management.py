@@ -49,7 +49,7 @@ class Management(commands.Cog):
         users = DiscordUser.objects.exclude(user__groups__in=[planning])
         discords = list()
         for user in users:
-            discords += user.id
+            discords += [user.id]
         return discords
 
     @slash_command(name="kick_all", description="Kicks all non planning users")
