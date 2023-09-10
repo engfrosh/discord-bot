@@ -46,11 +46,10 @@ class Management(commands.Cog):
     def get_all_non_planning(self):
         users = list(User.objects.filter(is_staff=False))
         planning = FroshRole.objects.filter(name="Planning").first().group
+        users = DiscordUser.objects.exclude(user__groups__in=planning)
         discords = list()
         for user in users:
-            obj = DiscordUser.objects.filter(user=user).first()
-            if planning not in user.groups and obj is not None:
-                discords += obj.id
+            discords += user.id
         return discords
 
     @slash_command(name="kick_all", description="Kicks all non planning users")
