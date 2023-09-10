@@ -45,7 +45,7 @@ class Management(commands.Cog):
 
     def get_all_non_planning(self):
         users = list(User.objects.filter(is_staff=False))
-        planning = FroshRole.objects.filter(name="Planning").group
+        planning = FroshRole.objects.filter(name="Planning").first().group
         discords = list()
         for user in users:
             obj = DiscordUser.objects.filter(user=user).first()
