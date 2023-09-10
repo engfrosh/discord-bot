@@ -59,7 +59,10 @@ class Management(commands.Cog):
         non_planning = await sync_to_async(self.get_all_non_planning)()
         guild = i.guild
         for user in non_planning:
-            await guild.get_member(user).kick(reason="Frosh is over!")
+            try:
+                await guild.get_member(user).kick(reason="Frosh is over!")
+            except Exception:
+                pass
         await i.send("Kicked all users!", ephemeral=True)
 
     @slash_command(name="add_role_to_role", description="Adds a role to every user with a role")
