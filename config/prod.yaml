@@ -1,14 +1,15 @@
 # These settings are only for settings that will not need to be changed while running
 
-bot_log_channel: 1058192431805382687
+bot_log_channel: 1178151674834063401
 
-guild: 1045045050935083029
+guild: 1178146501747281942
 
 admin_roles: [
-    1055653040935419904
+    1178147554471444570,
+    1178146565668470845
 ]
 
-server: 'https://mars.engfrosh.com/'
+server: 'https://scav.engfrosh.com/'
 
 module_settings:
   moderation:

@@ -38,4 +38,4 @@ module_settings:
     user_agent: 'Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/109.0'
 
   management:
-    superadmin: [264989719312465921]
+    superadmin: [264989719312465921, 521059091561316373]
