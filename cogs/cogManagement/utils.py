@@ -1,5 +1,6 @@
 import common_models.models as md
 from django.contrib.auth.models import User
+from common_models.models import RoleInvite
 import random
 import string
 
@@ -39,6 +40,23 @@ def compute_discord_name(user_id: int):
     return name
 
 
+def create_user(name):
+    split = name.split(" ")
+    if len(split) < 2:
+        first = ""
+        last = name
+    else:
+        first = split[0]
+        last = name[:len(first)+1]
+    db_username = name.replace(" ", "_") + "-" + "".join(random.choice(string.ascii_letters + string.digits)
+                                                         for i in range(8))
+    user = User(first_name=first, last_name=last, username=db_username)
+    user.save()
+    details = md.UserDetails(user=user, name=name)
+    details.save()
+    return details
+
+
 def create_discord_user(first, last, id, username, discriminator):
     name = first + " " + last
     db_username = name.replace(" ", "_") + "-" + "".join(random.choice(string.ascii_letters + string.digits)
@@ -48,6 +66,10 @@ def create_discord_user(first, last, id, username, discriminator):
     details = md.UserDetails(user=user, name=name)
     details.save()
     link_discord_user(user, id, username, discriminator)
+
+
+def link_userdetails(invite: RoleInvite, id: int, username: str, discriminator: int):
+    return link_discord_user(invite.user.user, id, username, discriminator)
 
 
 def link_discord_user(user: User, id: int, username: str, discriminator: int):

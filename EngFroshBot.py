@@ -178,13 +178,15 @@ class EngFroshBot(commands.Bot):
             if randrange(6) == 5 and message.channel.id == 1139701119010996344:
                 await message.reply("https://www.youtube.com/watch?v=whnZSnW3XsI")
 
-    async def on_member_remove(self, member):
-        user = DiscordUser.objects.filter(id=member.id).first()
+    def remove(self, id: int):
+        user = DiscordUser.objects.filter(id=id).first()
         if user is None:
-            self.info("User: " + member.nick + " left guild. Cannot find info in DB!")
-            return
+            return "User: " + str(id) + " left guild. Cannot find info in DB!"
         user.delete()
-        self.info("User: " + member.nick + " left guild. Deleting records!")
+        return "User: " + str(id) + " left guild. Deleting records!"
+
+    async def on_member_remove(self, member):
+        self.info(await sync_to_async(self.remove)(member.id))
 
     def error(self, message, *, exc_info=None, **kwargs):
         self.log(message, "ERROR", exc_info=exc_info, **kwargs)
