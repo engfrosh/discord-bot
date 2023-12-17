@@ -312,6 +312,7 @@ class Management(commands.Cog):
         for i in invites:
             role_invite = await sync_to_async(role_invites.filter(link=i.id).first)()
             if i.uses == 1 and role_invite is not None:
+                await i.delete()
                 for role in role_invite.role.split(","):
                     await member.add_roles(guild.get_role(int(role.strip())))
                 await sync_to_async(utils.link_userdetails)(role_invite,
@@ -319,7 +320,6 @@ class Management(commands.Cog):
                 name = await sync_to_async(utils.compute_discord_name)(member.id)
                 await member.edit(nick=name)
                 await sync_to_async(role_invite.delete)()
-                await i.delete()
                 break
 
     @slash_command(name="create_invite", description="Creates an invite that automatically grants a role.")
