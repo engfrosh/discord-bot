@@ -16,6 +16,7 @@ import traceback
 from common_models.models import DiscordUser
 from asgiref.sync import sync_to_async
 from random import randrange
+from django.db import close_old_connections
 
 logger = logging.getLogger("EngFroshBot")
 
@@ -151,6 +152,7 @@ class EngFroshBot(commands.Bot):
         self.log(msg, "EXCEPTION")
 
     async def on_interaction(self, i: Interaction):
+        close_old_connections()
         data = i.data
         user = i.user
         channel = i.channel
