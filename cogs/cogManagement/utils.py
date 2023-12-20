@@ -47,7 +47,7 @@ def create_user(name):
         last = name
     else:
         first = split[0]
-        last = name[:len(first)+1]
+        last = name[len(first)+1:]
     db_username = name.replace(" ", "_") + "-" + "".join(random.choice(string.ascii_letters + string.digits)
                                                          for i in range(8))
     user = User(first_name=first, last_name=last, username=db_username)
