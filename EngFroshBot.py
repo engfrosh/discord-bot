@@ -177,7 +177,7 @@ class EngFroshBot(commands.Bot):
         if message.author.bot:
             return
         if "fish" in message.content.lower():
-            if randrange(6) == 5 and message.channel.id == 1139701119010996344:
+            if randrange(3) == 2 and message.channel.id == 1184940013331419287:
                 await message.reply("https://www.youtube.com/watch?v=whnZSnW3XsI")
 
     def remove(self, id: int):
