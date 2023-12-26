@@ -174,6 +174,7 @@ class EngFroshBot(commands.Bot):
             self.log(msg, "ERROR")
 
     async def on_message(self, message):
+        close_old_connections()
         if message.author.bot:
             return
         if "fish" in message.content.lower():
