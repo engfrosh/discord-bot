@@ -61,6 +61,7 @@ def is_superadmin():
 
 def has_permission(perm):
     def predicate_sync(member):
+        close_old_connections()
         if member.guild_permissions >= nextcord.Permissions(administrator=True):
             return True
         user = member.id
