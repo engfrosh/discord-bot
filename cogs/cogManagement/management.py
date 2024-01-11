@@ -189,6 +189,8 @@ class Management(commands.Cog):
         async for user in i.guild.fetch_members():
             try:
                 await sync_to_async(utils.discord_clear_name)(user.id)
+                new_name = await sync_to_async(utils.compute_discord_name)(user.id)
+                await user.edit(nick=new_name)
             except Exception:
                 pass
         await i.send("Cleared nicknames!", ephemeral=True)
