@@ -184,6 +184,16 @@ class Management(commands.Cog):
 
         await i.send("Cleared nickname!", ephemeral=True)
 
+    @slash_command(name="clear_nicks", description="Clears all nicknames")
+    async def clear_nicks(self, i: Interaction):
+        users = await i.guild.fetch_members()
+        for user in users:
+            try:
+                await sync_to_async(utils.discord_clear_name)(user.id)
+            except Exception:
+                pass
+        await i.send("Cleared nicknames!", ephemeral=True)
+
     @slash_command(name="echo", description="Echos messages back from the bot")
     @is_admin()
     async def echo(self, i: Interaction, message: str):
