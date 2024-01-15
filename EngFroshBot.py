@@ -181,12 +181,13 @@ class EngFroshBot(commands.Bot):
         if "fish" in message.content.lower():
             if message.author.id == 666753178053902338:
                 await message.reply("https://www.youtube.com/watch?v=whnZSnW3XsI")
-            elif "monica" in message.content.lower():
-                if randrange(2) == 1 and message.channel.id == 1184940013331419287:
-                    await message.reply("https://www.youtube.com/watch?v=whnZSnW3XsI")
-            else:
-                if randrange(3) == 2 and message.channel.id == 1184940013331419287:
-                    await message.reply("https://www.youtube.com/watch?v=whnZSnW3XsI")
+            else if message.channel.id == 1196466346481950720 or message.channel.id == 1184940013331419287:
+                if "monica" in message.content.lower():
+                    if randrange(2) == 1:
+                        await message.reply("https://www.youtube.com/watch?v=whnZSnW3XsI")
+                else:
+                    if randrange(3) == 2:
+                        await message.reply("https://www.youtube.com/watch?v=whnZSnW3XsI")
 
     def remove(self, id: int):
         user = DiscordUser.objects.filter(id=id).first()
