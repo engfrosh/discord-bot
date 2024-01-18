@@ -16,7 +16,8 @@ import traceback
 from common_models.models import DiscordUser
 from asgiref.sync import sync_to_async
 from random import randrange
-from django.db import close_old_connections
+# from django.db import close_old_connections
+from django.db import connection
 
 logger = logging.getLogger("EngFroshBot")
 
@@ -61,7 +62,8 @@ def is_superadmin():
 
 def has_permission(perm):
     def predicate_sync(member):
-        close_old_connections()
+        # close_old_connections()
+        connection.close()
         if member.guild_permissions >= nextcord.Permissions(administrator=True):
             return True
         user = member.id
@@ -153,7 +155,8 @@ class EngFroshBot(commands.Bot):
         self.log(msg, "EXCEPTION")
 
     async def on_interaction(self, i: Interaction):
-        close_old_connections()
+        # close_old_connections()
+        connection.close()
         data = i.data
         user = i.user
         channel = i.channel
@@ -175,7 +178,8 @@ class EngFroshBot(commands.Bot):
             self.log(msg, "ERROR")
 
     async def on_message(self, message):
-        close_old_connections()
+        # close_old_connections()
+        connection.close()
         if message.author.bot:
             return
         if "fish" in message.content.lower():
