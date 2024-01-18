@@ -165,6 +165,7 @@ class EngFroshBot(commands.Bot):
         for key, value in data.items():
             message += " " + str(key) + ": " + str(value) + ","
         self.info(message + "\n", send_to_discord=False)
+        await i.response.defer()
         await self.process_application_commands(i)
 
     async def on_application_command_error(self, i: nextcord.Interaction, exception: Exception):
