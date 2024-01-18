@@ -155,6 +155,7 @@ class EngFroshBot(commands.Bot):
         self.log(msg, "EXCEPTION")
 
     async def on_interaction(self, i: Interaction):
+        await i.response.defer()
         # close_old_connections()
         connection.close()
         data = i.data
@@ -165,7 +166,6 @@ class EngFroshBot(commands.Bot):
         for key, value in data.items():
             message += " " + str(key) + ": " + str(value) + ","
         self.info(message + "\n", send_to_discord=False)
-        await i.response.defer()
         await self.process_application_commands(i)
 
     async def on_application_command_error(self, i: nextcord.Interaction, exception: Exception):
