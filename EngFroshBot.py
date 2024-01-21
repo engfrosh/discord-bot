@@ -153,7 +153,7 @@ class EngFroshBot(commands.Bot):
         self.log(msg, "EXCEPTION")
 
     async def on_interaction(self, i: Interaction):
-        #await i.response.defer()
+        # await i.response.defer()
         close_old_connections()
         data = i.data
         user = i.user
