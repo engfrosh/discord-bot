@@ -247,7 +247,7 @@ class Management(commands.Cog):
             tup = perms.pair()
             view = not tup[1].read_messages
             send = not tup[1].send_messages
-            response += role.name + " - View: " + str(view) + " - Send: " + str(send) + "\n"
+            response += role.name + " - View: " + str(view) + " - Send: " + str(send) + "\n" + str(tup[1]) + "\n"
         await i.send(response, ephemeral=True)
 
     @slash_command(name="add_overwrite", description="Adds an overwrite for a channel")
