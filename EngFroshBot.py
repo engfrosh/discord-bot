@@ -175,6 +175,12 @@ class EngFroshBot(commands.Bot):
             msg = f'Ignoring exception in command {i.application_command}:\n{trace}'
             self.log(msg, "ERROR")
 
+    fish = [
+        1196466346481950720,
+        1184940013331419287,
+        1214014681987940452
+    ]
+
     async def on_message(self, message):
         close_old_connections()
         if message.author.bot:
@@ -182,7 +188,7 @@ class EngFroshBot(commands.Bot):
         if "fish" in message.content.lower():
             if message.author.id == 666753178053902338:
                 await message.reply("https://www.youtube.com/watch?v=whnZSnW3XsI")
-            elif message.channel.id == 1196466346481950720 or message.channel.id == 1184940013331419287:
+            elif message.channel.id in self.fish:
                 if "monica" in message.content.lower():
                     if randrange(2) == 1:
                         await message.reply("https://www.youtube.com/watch?v=whnZSnW3XsI")
