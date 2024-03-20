@@ -367,8 +367,12 @@ class Management(commands.Cog):
                 try:
                     await sync_to_async(utils.discord_add_pronoun)(emoji.name, user_id)
                     new_name = await sync_to_async(utils.compute_discord_name)(user_id)
-                    await member.edit(nick=new_name)
-                    self.bot.info("Added pronoun to user " + member.name + " -> " + new_name, send_to_discord=False)
+                    if len(new_name) > 32:
+                        self.bot.info("Did not add pronoun to user (name too long)" +
+                                      member.name + " -> " + new_name, send_to_discord=False)
+                    else:
+                        await member.edit(nick=new_name)
+                        self.bot.info("Added pronoun to user " + member.name + " -> " + new_name, send_to_discord=False)
                     break
                 except Exception as e:
                     self.bot.log("Failed to add pronoun to user " + member.name, level="ERROR",)
