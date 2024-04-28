@@ -43,10 +43,32 @@ class Management(commands.Cog):
 
         return
 
-    def get_all_non_planning(self):
+    @slash_command(name="spirit_on_duty", description="Sets the current spirit on duty.")
+    @has_permission("common_models.spirit_on_duty")
+    async def spirit_on_duty(self, i: Interaction, user1: Optional[Member] = None, user2: Optional[Member] = None,
+                             user3: Optional[Member] = None, user4: Optional[Member] = None,
+                             user5: Optional[Member] = None):
+        role = i.guild.get_role(self.config['spirit_role'])
+        for m in role.members:
+            await m.remove_roles(role)
+        if user1 is not None:
+            await user1.add_roles(role)
+        if user2 is not None:
+            await user2.add_roles(role)
+        if user3 is not None:
+            await user3.add_roles(role)
+        if user4 is not None:
+            await user4.add_roles(role)
+        if user5 is not None:
+            await user5.add_roles(role)
+        await i.send("Changed spirit on duty!", ephemeral=True)
+
+    def get_all_non_kick(self):
         users = list(User.objects.filter(is_staff=False))
         planning = FroshRole.objects.filter(name="Planning").first().group
-        users = DiscordUser.objects.exclude(user__groups__in=[planning])
+        head = FroshRole.objects.filter(name="Head").first().group
+        exempt = Group.objects.get_or_create(name="Kick Exempt")[0]
+        users = DiscordUser.objects.exclude(user__groups__in=[planning, head, exempt])
         discords = list()
         for user in users:
             discords += [user.id]
@@ -56,7 +78,7 @@ class Management(commands.Cog):
     @is_admin()
     async def kick_all(self, i: Interaction):
         await i.response.defer()
-        non_planning = await sync_to_async(self.get_all_non_planning)()
+        non_planning = await sync_to_async(self.get_all_non_kick)()
         guild = i.guild
         for user in non_planning:
             try:

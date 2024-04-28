@@ -31,3 +31,5 @@ module_settings:
   robert:
     updates_message: 1066850169313841253
     updates_channel: 1058616213720281138
+  management:
+    spirit_role: 1234216367385870437
