@@ -60,8 +60,8 @@ class Management(commands.Cog):
     @is_admin()
     async def teamchannel(self, i: Interaction,
                           role1: Role, role2: Optional[Role], role3: Optional[Role],
-                          team_role: str = Optional[nextcord.SlashOption(name="team_role",
-                                                                         choices=["Head", "Facil", "Frosh"])]):
+                          team_role: str = Optional[nextcord.SlashOption(name="team_role",  # noqa: F821
+                                                                         choices=["Head", "Facil", "Frosh"])]):  # noqa: F821 E501
         await i.response.defer()
         if team_role is None:
             team_role = "Head"
@@ -78,7 +78,7 @@ class Management(commands.Cog):
         cats = team_data[2]
         perms = {}
         perms[i.guild.default_role] = PermissionOverwrite(read_messages=False)
-        for r in [role1, role2, role3]:
+        for r in [role1, role2, role3, i.guild.get_role(self.config['froshadmin_role'])]:
             if r is not None:
                 perms[r] = PermissionOverwrite(read_messages=True)
         for team, roles in teams.items():
