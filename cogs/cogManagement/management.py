@@ -6,7 +6,6 @@ from typing import Optional
 from nextcord.ext import commands
 from nextcord import slash_command, Interaction, PermissionOverwrite, TextChannel, Role, Permissions
 from nextcord import Attachment, Member
-import nextcord
 from asgiref.sync import sync_to_async
 import time
 from django.contrib.auth.models import Permission, Group
@@ -58,13 +57,12 @@ class Management(commands.Cog):
 
     @slash_command(name="teamchannel", description="Creates a channel for all teams")
     @is_admin()
-    async def teamchannel(self, i: Interaction,
-                          role1: Role, role2: Optional[Role], role3: Optional[Role],
-                          team_role: str = Optional[nextcord.SlashOption(name="team_role",  # noqa: F821
-                                                                         choices=["Head", "Facil", "Frosh"])]):  # noqa: F821 E501
+    async def teamchannel(self, i: Interaction, team_role: str,
+                          role1: Role, role2: Optional[Role], role3: Optional[Role]):
         await i.response.defer()
-        if team_role is None:
-            team_role = "Head"
+        if team_role not in ["Head", "Facil", "Frosh"]:
+            await i.send("Invalid team role! Note they must be in the format \"Head\", etc", ephemeral=True)
+            return
         team_data = await sync_to_async(self.get_teams)()
         types = team_data[0]
         for j in range(len(types)):
