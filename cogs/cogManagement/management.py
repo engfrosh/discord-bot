@@ -6,11 +6,12 @@ from typing import Optional
 from nextcord.ext import commands
 from nextcord import slash_command, Interaction, PermissionOverwrite, TextChannel, Role, Permissions
 from nextcord import Attachment, Member
+import nextcord
 from asgiref.sync import sync_to_async
 import time
 from django.contrib.auth.models import Permission, Group
 
-from common_models.models import RoleInvite, DiscordUser, FroshRole
+from common_models.models import RoleInvite, DiscordUser, DiscordRole, Team, FroshRole, DiscordChannel
 from django.contrib.auth.models import User
 
 from EngFroshBot import EngFroshBot, is_admin, has_permission, is_superadmin
@@ -29,6 +30,70 @@ class Management(commands.Cog):
         """Management COG init"""
         self.bot = bot
         self.config = bot.config["module_settings"]["management"]
+
+    def get_types(self):
+        types = [
+            ("Frosh", Group.objects.get_or_create(name="Frosh")[0]),
+            ("Facil", Group.objects.get_or_create(name="Facil")[0]),
+            ("Head", Group.objects.get_or_create(name="Head")[0]),
+            ("Groupco", Group.objects.get_or_create(name="GroupCo")[0]),
+        ]
+        return types
+
+    def get_teams(self):
+        teams = Team.objects.all()
+        roles = {}
+        types = self.get_types()
+        cats = {}
+        for team in teams:
+            cats[team.discord_name] = DiscordChannel.objects.filter(team=team, type=4).first().id
+            t_roles = []
+            for t in types:
+                t_roles += [DiscordRole.objects.filter(group_id=team.group, secondary_group_id=t[1]).first().role_id]
+            roles[team.discord_name] = t_roles
+        type_names = []
+        for t in types:
+            type_names += [t[0]]
+        return (type_names, roles, cats)
+
+    @slash_command(name="teamchannel", description="Creates a channel for all teams")
+    @is_admin()
+    async def teamchannel(self, i: Interaction,
+                          role1: Role, role2: Optional[Role], role3: Optional[Role],
+                          team_role: str = Optional[nextcord.SlashOption(name="team_role",
+                                                                         choices=["Head", "Facil", "Frosh"])]):
+        await i.response.defer()
+        if team_role is None:
+            team_role = "Head"
+        team_data = await sync_to_async(self.get_teams)()
+        types = team_data[0]
+        for j in range(len(types)):
+            t = types[j]
+            if t == team_role:
+                index = j
+                break
+        if index == -1:
+            await i.send("Unable to find team role!", ephemeral=True)
+        teams = team_data[1]
+        cats = team_data[2]
+        perms = {}
+        perms[i.guild.default_role] = PermissionOverwrite(read_messages=False)
+        for r in [role1, role2, role3]:
+            if r is not None:
+                perms[r] = PermissionOverwrite(read_messages=True)
+        for team, roles in teams.items():
+            cat = i.guild.get_channel(cats[team])
+            name = team + "-" + types[index] + "-" + role1.name
+            if role2 is not None:
+                name += "-" + role2.name
+            if role3 is not None:
+                name += "-" + role3.name
+            cperms = perms.copy()
+            for j in range(index, len(types)):
+                r = i.guild.get_role(roles[j])
+                cperms[r] = PermissionOverwrite(read_messages=True)
+            await i.guild.create_text_channel(name, category=cat, overwrites=cperms)
+        await i.send("Created channels!", ephemeral=True)
 
     @slash_command(name="purge", description="Purge all messages from this channel.")
     @has_permission("common_models.purge_channels")
