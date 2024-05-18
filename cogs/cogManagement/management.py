@@ -45,7 +45,10 @@ class Management(commands.Cog):
         types = self.get_types()
         cats = {}
         for team in teams:
-            cats[team.discord_name] = DiscordChannel.objects.filter(team=team, type=4).first().id
+            cat = DiscordChannel.objects.filter(team=team, type=4).first()
+            cats[team.discord_name] = cat.id
+            if cat is None:
+                continue
             t_roles = []
             for t in types:
                 t_roles += [DiscordRole.objects.filter(group_id=team.group, secondary_group_id=t[1]).first().role_id]
