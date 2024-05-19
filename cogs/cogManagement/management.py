@@ -62,7 +62,7 @@ class Management(commands.Cog):
     @is_admin()
     async def teamchannel(self, i: Interaction, team_role: str,
                           role1: Role, role2: Optional[Role], role3: Optional[Role]):
-        await i.response.defer()
+        await i.response.defer(ephemeral=True)
         if team_role not in ["Head", "Facil", "Frosh"]:
             await i.send("Invalid team role! Note they must be in the format \"Head\", etc", ephemeral=True)
             return
@@ -143,7 +143,7 @@ class Management(commands.Cog):
     @slash_command(name="kick_all", description="Kicks all non planning users")
     @is_admin()
     async def kick_all(self, i: Interaction):
-        await i.response.defer()
+        await i.response.defer(ephemeral=True)
         non_planning = await sync_to_async(self.get_all_non_kick)()
         guild = i.guild
         for user in non_planning:
