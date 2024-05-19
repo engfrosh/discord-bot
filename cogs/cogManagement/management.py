@@ -30,6 +30,17 @@ class Management(commands.Cog):
         self.bot = bot
         self.config = bot.config["module_settings"]["management"]
 
+    @slash_command(name="bulk_rename", description="Bulk renames channels by pattern")
+    @is_admin()
+    async def bulk_rename(self, i: Interaction, pattern: str, replacement: str):
+        await i.defer(ephemeral=True)
+        for c in i.guild.text_channels:
+            nsplit = c.name.split("-", 2)
+            if nsplit[1] == pattern:
+                new_name = nsplit[0] + "-" + replacement
+                c.edit(name=new_name)
+        await i.send("Renamed channels!", ephemeral=True)
+
     def get_types(self):
         types = [
             ("Frosh", Group.objects.get_or_create(name="Frosh")[0]),
