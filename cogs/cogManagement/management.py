@@ -33,7 +33,7 @@ class Management(commands.Cog):
     @slash_command(name="bulk_rename", description="Bulk renames channels by pattern")
     @is_admin()
     async def bulk_rename(self, i: Interaction, pattern: str, replacement: str):
-        await i.defer(ephemeral=True)
+        await i.response.defer(ephemeral=True)
         for c in i.guild.text_channels:
             nsplit = c.name.split("-", 2)
             if nsplit[1] == pattern:
