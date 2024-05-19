@@ -36,6 +36,8 @@ class Management(commands.Cog):
         await i.response.defer(ephemeral=True)
         for c in i.guild.text_channels:
             nsplit = c.name.split("-", 2)
+            if len(nsplit) < 2:
+                continue
             if nsplit[1] == pattern:
                 new_name = nsplit[0] + "-" + replacement
                 c.edit(name=new_name)
