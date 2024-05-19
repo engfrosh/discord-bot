@@ -35,12 +35,12 @@ class Management(commands.Cog):
     async def bulk_rename(self, i: Interaction, pattern: str, replacement: str):
         await i.response.defer(ephemeral=True)
         for c in i.guild.text_channels:
-            nsplit = c.name.split("-", 2)
+            nsplit = c.name.split("-", 1)
             if len(nsplit) < 2:
                 continue
             if nsplit[1] == pattern:
                 new_name = nsplit[0] + "-" + replacement
-                c.edit(name=new_name)
+                await c.edit(name=new_name)
         await i.send("Renamed channels!", ephemeral=True)
 
     def get_types(self):
