@@ -30,6 +30,20 @@ class Management(commands.Cog):
         self.bot = bot
         self.config = bot.config["module_settings"]["management"]
 
+    @slash_command(name="send_role_message",
+                   description="Sends a message to this channel for users to select a role")
+    @is_admin()
+    async def send_role_message(self, i: Interaction, emote: str, role: Role, message: str):
+        """Send role select message in this channel."""
+
+        await i.response.defer(with_message=True, ephemeral=True)
+        message = await i.channel.send(message)
+
+        await message.add_reaction(emote)
+        await sync_to_async(utils.register_role_message)(emote, role.id, message.id)
+
+        await i.send("Successfully created message!", ephemeral=True)
+
     @slash_command(name="bulk_rename", description="Bulk renames channels by pattern")
     @is_admin()
     async def bulk_rename(self, i: Interaction, pattern: str, replacement: str):
@@ -463,6 +477,14 @@ class Management(commands.Cog):
 
         if user_id == self.bot.user.id:
             return
+        role_id = await sync_to_async(utils.role_react)(message_id, emoji.name)
+        if role_id is not None:
+            guild = self.bot.get_guild(payload.guild_id)
+            user = guild.get_member(payload.user_id)
+            role = guild.get_role(role_id)
+            await user.add_roles(role)
+            self.bot.info("Added user " + str(payload.user_id) + " to role " + str(role_id), send_to_discord=False)
+            return
         for message in await sync_to_async(utils.get_messages)("pronoun"):
             if message_id == message.id:
                 try:
@@ -490,6 +512,14 @@ class Management(commands.Cog):
         message_id = payload.message_id
 
         if user_id == self.bot.user.id:
+            return
+        role_id = await sync_to_async(utils.role_react)(message_id, emoji.name)
+        if role_id is not None:
+            guild = self.bot.get_guild(payload.guild_id)
+            user = guild.get_member(payload.user_id)
+            role = guild.get_role(role_id)
+            await user.remove_roles(role)
+            self.bot.info("Removed user " + str(payload.user_id) + " from role " + str(role_id), send_to_discord=False)
             return
         for message in await sync_to_async(utils.get_messages)("pronoun"):
             if message_id == message.id:

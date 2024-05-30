@@ -5,6 +5,21 @@ import random
 import string
 
 
+def register_role_message(emote: str, role: int, message: int):
+    option = md.RoleOption(emote=emote, role=role, message=message)
+    option.save()
+
+
+def role_react(message: int, emote: str):
+    roles = md.RoleOption.objects.filter(message=message)
+    if len(roles) > 0:
+        # Do emoji comparison here because the database will screw it up
+        for r in roles:
+            if r.emote == emote:
+                return r.role
+    return None
+
+
 def add_pronoun(name: str, order: int, user: User):
     name = name.title()
     pronoun = md.Pronoun(name=name, order=order, user=user)
