@@ -10,7 +10,7 @@ from asgiref.sync import sync_to_async
 import time
 from django.contrib.auth.models import Permission, Group
 
-from common_models.models import RoleInvite, DiscordUser, DiscordRole, Team, FroshRole, DiscordChannel
+from common_models.models import RoleInvite, DiscordUser, DiscordRole, Team, FroshRole, DiscordChannel, Setting
 from django.contrib.auth.models import User
 
 from EngFroshBot import EngFroshBot, is_admin, has_permission, is_superadmin
@@ -157,27 +157,31 @@ class Management(commands.Cog):
         await i.send("Changed spirit on duty!", ephemeral=True)
 
     def get_all_non_kick(self):
-        users = list(User.objects.filter(is_staff=False))
-        planning = FroshRole.objects.filter(name="Planning").first().group
-        head = FroshRole.objects.filter(name="Head").first().group
-        exempt = Group.objects.get_or_create(name="Kick Exempt")[0]
-        users = DiscordUser.objects.exclude(user__groups__in=[planning, head, exempt])
+        groups = Setting.objects.get_or_create(id="nokick_groups",
+                                               defaults={"value": "Planning,Head,Kick Exempt"})[0].value
+        groups_query = Group.objects.filter(name__in=groups.split(","))
+        users = DiscordUser.objects.exclude(user__groups__in=list(groups_query))
         discords = list()
         for user in users:
+            if user.user.is_staff:
+                continue
             discords += [user.id]
         return discords
 
     @slash_command(name="kick_all", description="Kicks all non planning users")
     @is_admin()
-    async def kick_all(self, i: Interaction):
+    async def kick_all(self, i: Interaction, dry_run: bool = False):
         await i.response.defer(ephemeral=True)
         non_planning = await sync_to_async(self.get_all_non_kick)()
         guild = i.guild
-        for user in non_planning:
-            try:
-                await guild.get_member(user).kick(reason="Frosh is over!")
-            except Exception:
-                pass
+        if not dry_run:
+            for user in non_planning:
+                try:
+                    await guild.get_member(user).kick(reason="Frosh is over!")
+                except Exception:
+                    pass
+        else:
+            print(non_planning)
         await i.send("Kicked all users!", ephemeral=True)
 
     @slash_command(name="add_role_to_role", description="Adds a role to every user with a role")
