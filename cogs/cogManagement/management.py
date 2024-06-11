@@ -10,8 +10,7 @@ from asgiref.sync import sync_to_async
 import time
 from django.contrib.auth.models import Permission, Group
 
-from common_models.models import RoleInvite, DiscordUser, DiscordRole, Team, FroshRole, DiscordChannel, Setting
-from django.contrib.auth.models import User
+from common_models.models import RoleInvite, DiscordUser, DiscordRole, Team, DiscordChannel, Setting
 
 from EngFroshBot import EngFroshBot, is_admin, has_permission, is_superadmin
 import boto3
