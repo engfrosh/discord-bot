@@ -200,8 +200,9 @@ class EngFroshBot(commands.Bot):
         user = DiscordUser.objects.filter(id=id).first()
         if user is None:
             return "User: " + str(id) + " left guild. Cannot find info in DB!"
+        message = "User: " + str(id) + " - " + user.user.username + " left guild. Deleting records!"
         user.delete()
-        return "User: " + str(id) + " left guild. Deleting records!"
+        return message
 
     async def on_member_remove(self, member):
         self.info(await sync_to_async(self.remove)(member.id))
