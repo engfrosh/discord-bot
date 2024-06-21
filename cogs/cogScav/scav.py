@@ -174,15 +174,6 @@ class Scav(commands.Cog):
         data = json.loads(r.text)
         return data['id']
 
-    def scav_tree_update(self, team):
-        url = self.server + "api/tree?id=" + str(team.group_id)
-        user = os.environ['SERVER_USER']
-        passwd = os.environ['SERVER_PASS']
-        r = requests.post(url, auth=HTTPBasicAuth(user, passwd))
-        if r.status_code != 200:
-            return False
-        return True
-
     def get_photo(self, id):
         return VerificationPhoto.objects.filter(id=id)[0]
 
@@ -235,10 +226,8 @@ class Scav(commands.Cog):
             return
         elif not puzzle.require_photo_upload:
             await sync_to_async(activity.mark_completed)()
-            self.scav_tree_update(team)
             await i.send("Completed scav puzzle")
             return
-        self.scav_tree_update(team)
         url = file.url
         name = urlparse(url).path.split('/')[-1]  # Taken from https://stackoverflow.com/a/42341786
         headers = {
