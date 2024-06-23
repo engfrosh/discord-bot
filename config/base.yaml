@@ -7,9 +7,9 @@ modules:
 
   cogs: [
     "cogs.cogCoin.coin",
-    "cogs.cogScav.scav",
+#    "cogs.cogScav.scav",
     "cogs.cogManagement.management",
-    "cogs.cogEuchre.euchre",
+#    "cogs.cogEuchre.euchre",
     "cogs.cogRobert.robert"
     ]
 
