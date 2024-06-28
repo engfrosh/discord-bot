@@ -186,7 +186,7 @@ class EngFroshBot(commands.Bot):
         if message.author.bot:
             return
         if "fish" in message.content.lower():
-            if message.author.id == 666753178053902338:
+            if message.author.id == 521059091561316373:
                 await message.reply("https://www.youtube.com/watch?v=whnZSnW3XsI")
             elif message.channel.id in self.fish:
                 if "monica" in message.content.lower():
