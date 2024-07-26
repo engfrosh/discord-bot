@@ -304,6 +304,7 @@ class Management(commands.Cog):
 
     @slash_command(name="clear_nicks", description="Clears all nicknames")
     async def clear_nicks(self, i: Interaction):
+        await i.response.defer(ephemeral=True)
         async for user in i.guild.fetch_members():
             try:
                 await sync_to_async(utils.discord_clear_name)(user.id)
