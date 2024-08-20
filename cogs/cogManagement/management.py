@@ -130,6 +130,7 @@ class Management(commands.Cog):
     @has_permission("common_models.purge_channels")
     async def purge(self, i: Interaction, channel_id: Optional[str] = None):
         """Purge the channel, only available to admin."""
+        await i.response.defer(ephemeral=True)
 
         if isinstance(i.channel, TextChannel):
             await i.channel.purge()  # type: ignore
