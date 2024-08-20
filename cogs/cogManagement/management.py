@@ -87,7 +87,8 @@ class Management(commands.Cog):
     @slash_command(name="teamchannel", description="Creates a channel for all teams")
     @is_admin()
     async def teamchannel(self, i: Interaction, team_role: str,
-                          role1: Role, role2: Optional[Role], role3: Optional[Role]):
+                          role1: Role, role2: Optional[Role], role3: Optional[Role],
+                          suffix: Optional[str]):
         await i.response.defer(ephemeral=True)
         if team_role not in ["Head", "Facil", "Frosh"]:
             await i.send("Invalid team role! Note they must be in the format \"Head\", etc", ephemeral=True)
@@ -112,11 +113,14 @@ class Management(commands.Cog):
             perms[i.guild.get_role("Planning")] = PermissionOverwrite(read_messages=True)
         for team, roles in teams.items():
             cat = i.guild.get_channel(cats[team])
-            name = team + "-" + types[index] + "-" + role1.name
-            if role2 is not None:
-                name += "-" + role2.name
-            if role3 is not None:
-                name += "-" + role3.name
+            if suffix is None:
+                name = team + "-" + types[index] + "-" + role1.name
+                if role2 is not None:
+                    name += "-" + role2.name
+                if role3 is not None:
+                    name += "-" + role3.name
+            else:
+                name = team + "-" + suffix
             cperms = perms.copy()
             for j in range(index, len(types)):
                 r = i.guild.get_role(roles[j])
