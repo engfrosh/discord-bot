@@ -109,8 +109,6 @@ class Management(commands.Cog):
         for r in [role1, role2, role3, i.guild.get_role(self.config['froshadmin_role'])]:
             if r is not None:
                 perms[r] = PermissionOverwrite(read_messages=True)
-        if team_role == "Frosh":
-            perms[i.guild.get_role("Planning")] = PermissionOverwrite(read_messages=True)
         for team, roles in teams.items():
             cat = i.guild.get_channel(cats[team])
             if suffix is None:
