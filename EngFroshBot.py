@@ -178,7 +178,8 @@ class EngFroshBot(commands.Bot):
     fish = [
         1196466346481950720,
         1184940013331419287,
-        1214014681987940452
+        1214014681987940452,
+        1279833228861112441
     ]
 
     async def on_message(self, message):
