@@ -1,8 +1,8 @@
 # These settings are only for settings that will not need to be changed while running
 
-bot_log_channel: 1178151674834063401
+bot_log_channel: 1322342859726393429
 
-guild: 1178146501747281942
+guild: 1322342859726393426
 
 admin_roles: [
     1178147554471444570,
