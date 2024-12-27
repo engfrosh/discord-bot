@@ -328,7 +328,7 @@ class Management(commands.Cog):
     @slash_command(name="edit_role", description="Adds a permission to a role")
     @is_admin()
     async def edit_role(self, i: Interaction, role: Role, name: str, value: bool):
-        await role.edit(Permissions(**{name: value}))
+        await role.edit(permissions=Permissions(**{name: value}))
         await i.send("Updated role!", ephemeral=True)
 
     @slash_command(name="add_role_to_user", description="Adds a role to a user")
