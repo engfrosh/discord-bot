@@ -325,6 +325,18 @@ class Management(commands.Cog):
         await i.send("Echod message!", ephemeral=True)
         await i.channel.send(message)
 
+    @slash_command(name="edit_role", description="Adds a permission to a role")
+    @is_admin()
+    async def edit_role(self, i: Interaction, role: Role, name: str, value: bool):
+        await role.edit(Permissions(**{name: value}))
+        await i.send("Updated role!", ephemeral=True)
+
+    @slash_command(name="add_role_to_user", description="Adds a role to a user")
+    @is_admin()
+    async def add_role_to_user(self, i: Interaction, user: Member, role: Role):
+        await user.add_roles(role)
+        await i.send("Added role to user!", ephemeral=True)
+
     @slash_command(name="channels", description="Lists all the channels in the server")
     @is_admin()
     async def categories(self, i: Interaction):
