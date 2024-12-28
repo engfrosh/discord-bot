@@ -44,7 +44,9 @@ def compute_discord_name(user_id: int):
     if details.override_nick is not None:
         return details.override_nick
     pronouns = details.pronouns
-    name = user.first_name + " " + user.last_name
+    name = user.first_name
+    if user.last_name:
+        name += " " + user.last_name[:1]
     if len(pronouns) > 0:
         name += " ("
         for i in range(len(pronouns)-1):
