@@ -1,12 +1,12 @@
 # These settings are only for settings that will not need to be changed while running
 
-bot_log_channel: 1322342859726393429
+bot_log_channel: 1322353203047567411
 
 guild: 1322342859726393426
 
 admin_roles: [
-    1178147554471444570,
-    1178146565668470845
+    1322347196007321651,
+    1322353304663228438
 ]
 
 server: 'https://scav.engfrosh.com/'
@@ -14,7 +14,7 @@ server: 'https://scav.engfrosh.com/'
 module_settings:
   moderation:
     ignored_channels: [
-      1058191406646165504
+      1322353203047567411
     ]
     report_channels: 858741004831555634
   coin:
@@ -28,5 +28,5 @@ module_settings:
     updates_message: 1066848291628789890
     updates_channel: 1061458052034863224
   management:
-    spirit_role: 1234213434590236763
-    froshadmin_role: 1201386116083884164
+    spirit_role: 1322353492727435294
+    froshadmin_role: 1322353560205267017
