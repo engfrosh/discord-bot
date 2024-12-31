@@ -39,20 +39,7 @@ def compute_discord_name(user_id: int):
     disc_user = md.DiscordUser.objects.filter(id=user_id).first()
     if disc_user is None:
         return None
-    user = disc_user.user
-    details = md.UserDetails.objects.filter(user=user).first()
-    if details.override_nick is not None:
-        return details.override_nick
-    pronouns = details.pronouns
-    name = user.first_name + " " + user.last_name
-    if len(pronouns) > 0:
-        name += " ("
-        for i in range(len(pronouns)-1):
-            if len(name + pronouns[i].name + " ") > 31:
-                break
-            name += pronouns[i].name + " "
-        name += pronouns[len(pronouns)-1].name + ")"
-    return name
+    return disc_user.compute_name()
 
 
 def create_user(name):
