@@ -176,9 +176,7 @@ class EngFroshBot(commands.Bot):
             self.log(msg, "ERROR")
 
     fish = [
-        1196466346481950720,
-        1184940013331419287,
-        1214014681987940452
+        1322432479621288018
     ]
 
     async def on_message(self, message):
@@ -186,7 +184,7 @@ class EngFroshBot(commands.Bot):
         if message.author.bot:
             return
         if "fish" in message.content.lower():
-            if message.author.id == 521059091561316373:
+            if message.author.id == 794766984838381579:
                 await message.reply("https://www.youtube.com/watch?v=whnZSnW3XsI")
             elif message.channel.id in self.fish:
                 if "monica" in message.content.lower():
