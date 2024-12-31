@@ -17,6 +17,8 @@ from common_models.models import DiscordUser
 from asgiref.sync import sync_to_async
 from random import randrange
 from django.db import close_old_connections
+from sentry_sdk import capture_exception
+import sys
 
 logger = logging.getLogger("EngFroshBot")
 
@@ -144,10 +146,14 @@ class EngFroshBot(commands.Bot):
                            exc_info=e, send_to_discord=False)
 
     async def on_error(self, event_method, *args, **kwargs):
+        e = sys.exception()
+        capture_exception(e)
         msg = f'Ignoring exception in {event_method}\n{traceback.format_exc()}'
         self.log(msg, "EXCEPTION")
 
     async def on_command_error(self, context, exception):
+        e = sys.exception()
+        capture_exception(e)
         trace = "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
         msg = f'Ignoring exception in command {context.command}:\n{trace}'
         self.log(msg, "EXCEPTION")
