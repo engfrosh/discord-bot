@@ -618,7 +618,7 @@ class Management(commands.Cog):
         if self.get(guild.categories, name) is not None:
             await i.send("This category already exists!", ephemeral=True)
             return
-        perms = Permissions(change_nickname=True, read_messages=True, send_messages=True)
+        perms = Permissions(read_messages=True, send_messages=True)
         role = await guild.create_role(name=name, mentionable=True, hoist=True, permissions=perms)
         overwrites = {role: PermissionOverwrite(view_channel=True),
                       guild.default_role: PermissionOverwrite(view_channel=False)}
