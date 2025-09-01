@@ -48,12 +48,6 @@ def is_admin():
         for r in admin_roles:
             if get(member.roles, id=r) is not None:
                 return True
-        discord_user = DiscordUser.objects.filter(id=member.id).first()
-        if discord_user is None:
-            return False  # User account isn't linked
-        user_model = discord_user.user
-        if user_model.is_superuser:
-            return True
         return False
     return application_checks.check(predicate)
 
@@ -62,12 +56,6 @@ def is_superadmin():
     def predicate(i: nextcord.Interaction):
         superadmin = global_config['module_settings']['management']['superadmin']
         if i.user.id in superadmin:
-            return True
-        discord_user = DiscordUser.objects.filter(id=i.user.id).first()
-        if discord_user is None:
-            return False  # User account isn't linked
-        user_model = discord_user.user
-        if user_model.is_superuser:
             return True
         return False
     return application_checks.check(predicate)
