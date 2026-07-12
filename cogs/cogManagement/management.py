@@ -361,6 +361,38 @@ class Management(commands.Cog):
         for c in chunk_list:
             await i.send("```" + c + "```", ephemeral=True)
 
+    @slash_command(name="untracked_channels", description="Shows channels in the server but not in the common model")
+    @is_admin()
+    async def untracked_channels(self, i: Interaction):
+        """Display channels that exist in Discord but not in DiscordChannel model."""
+        await i.response.defer(ephemeral=True)
+
+        discord_channel_ids = set()
+        for channel in i.guild.text_channels + i.guild.voice_channels:
+            discord_channel_ids.add(channel.id)
+
+        tracked_channels = await sync_to_async(DiscordChannel.objects.all)()
+        tracked_channel_ids = set()
+        for channel in tracked_channels:
+            tracked_channel_ids.add(channel.id)
+
+        untracked_ids = discord_channel_ids - tracked_channel_ids
+
+        if not untracked_ids:
+            await i.send("All channels are tracked!", ephemeral=True)
+            return
+
+        response = "Untracked Channels:\n"
+        for channel_id in untracked_ids:
+            channel = i.guild.get_channel(channel_id)
+            if channel:
+                response += f"- {channel.name} ({channel.id})\n"
+
+        chunks, chunk_size = len(response), 1950
+        chunk_list = [response[i:i+chunk_size] for i in range(0, chunks, chunk_size)]
+        for c in chunk_list:
+            await i.send("```" + c + "```", ephemeral=True)
+
     @slash_command(name="overwrites", description="Lists the overwrites on a channel")
     @is_admin()
     async def overwrites(self, i: Interaction, id):
