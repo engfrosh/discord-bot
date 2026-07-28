@@ -371,10 +371,7 @@ class Management(commands.Cog):
         for channel in i.guild.text_channels + i.guild.voice_channels:
             discord_channel_ids.add(channel.id)
 
-        tracked_channels = await sync_to_async(DiscordChannel.objects.all)()
-        tracked_channel_ids = set()
-        for channel in tracked_channels:
-            tracked_channel_ids.add(channel.id)
+        tracked_channel_ids = await sync_to_async(self.get_tracked_channel_ids)()
 
         untracked_ids = discord_channel_ids - tracked_channel_ids
 
@@ -392,6 +389,10 @@ class Management(commands.Cog):
         chunk_list = [response[i:i+chunk_size] for i in range(0, chunks, chunk_size)]
         for c in chunk_list:
             await i.send("```" + c + "```", ephemeral=True)
+
+    def get_tracked_channel_ids(self):
+        tracked_channels = DiscordChannel.objects.all()
+        return {ch.id for ch in tracked_channels}
 
     @slash_command(name="overwrites", description="Lists the overwrites on a channel")
     @is_admin()
