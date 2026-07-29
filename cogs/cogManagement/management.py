@@ -364,7 +364,6 @@ class Management(commands.Cog):
     @slash_command(name="untracked_channels", description="Shows channels in the server but not in the common model")
     @is_admin()
     async def untracked_channels(self, i: Interaction):
-        """Display channels that exist in Discord but not in DiscordChannel model."""
         await i.response.defer(ephemeral=True)
 
         discord_channel_ids = set()
@@ -393,6 +392,62 @@ class Management(commands.Cog):
     def get_tracked_channel_ids(self):
         tracked_channels = DiscordChannel.objects.all()
         return {ch.id for ch in tracked_channels}
+
+    @slash_command(name="clean_deleted_channels", description="Removes channels from common model \
+                                                               that no longer exist in the server")
+    @is_admin()
+    async def clean_deleted_channels(self, i: Interaction, confirm: bool = False):
+        await i.response.defer(ephemeral=True)
+
+        discord_channel_ids = set()
+        for channel in i.guild.text_channels + i.guild.voice_channels + i.guild.categories:
+            discord_channel_ids.add(channel.id)
+
+        tracked_channel_ids = await sync_to_async(self.get_tracked_channel_ids)()
+
+        deleted_ids = tracked_channel_ids - discord_channel_ids
+
+        if not deleted_ids:
+            await i.send("No deleted channels found in common model!", ephemeral=True)
+            return
+
+        deleted_channels = await sync_to_async(self.get_deleted_channel_details)(deleted_ids)
+
+        channel_list = "\n".join([f"- {ch['name']} (ID: {ch['id']})" for ch in deleted_channels])
+
+        if not confirm:
+            await i.send(f"**Found {len(deleted_channels)} deleted channels in common model:**\n{channel_list}\n\n"
+                         f"Run with `confirm: true` to delete.", ephemeral=True)
+            return
+
+        deleted_count = await sync_to_async(self.clean_deleted_channels_sync)(deleted_ids)
+        await i.send(f"Successfully cleaned {deleted_count} deleted channels from common model!", ephemeral=True)
+
+    def get_deleted_channel_details(self, channel_ids):
+        deleted = []
+        for channel_id in channel_ids:
+            try:
+                channel = DiscordChannel.objects.get(id=channel_id)
+                deleted.append({"id": channel.id, "name": channel.name})
+            except DiscordChannel.DoesNotExist:
+                pass
+        return deleted
+
+    def clean_deleted_channels_sync(self, channel_ids):
+        count = 0
+        for channel_id in channel_ids:
+            try:
+                channel = DiscordChannel.objects.get(id=channel_id)
+                channel_name = channel.name
+                channel.delete()
+                count += 1
+                logger.info(f"Cleaned deleted channel from common model: {channel_name} (ID: {channel_id})")
+            except DiscordChannel.DoesNotExist:
+                logger.warning(f"Channel not found in common model: {channel_id}")
+            except Exception as e:
+                logger.error(f"Failed to delete channel {channel_id}: {e}")
+
+        return count
 
     @slash_command(name="overwrites", description="Lists the overwrites on a channel")
     @is_admin()
