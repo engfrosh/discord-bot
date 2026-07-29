@@ -448,6 +448,68 @@ class Management(commands.Cog):
 
         return count
 
+    @slash_command(name="bulk_delete_channels", description="Deletes channels from the server")
+    @is_admin()
+    async def bulk_delete_channels(self, i: Interaction, channel_ids: str, confirm: bool = False):
+        await i.response.defer(ephemeral=True)
+
+        try:
+            ids = [int(ch_id.strip()) for ch_id in channel_ids.split(",") if ch_id.strip()]
+        except ValueError:
+            await i.send("Invalid channel IDs! Please provide comma-separated numeric IDs.", ephemeral=True)
+            return
+
+        if not ids:
+            await i.send("No valid channel IDs provided.", ephemeral=True)
+            return
+
+        channels_to_delete = []
+        not_found = []
+
+        for channel_id in ids:
+            channel = i.guild.get_channel(channel_id)
+            if channel:
+                channels_to_delete.append(channel)
+            else:
+                not_found.append(channel_id)
+
+        channel_list = "\n".join([f"- {ch.name} (ID: {ch.id})" for ch in channels_to_delete])
+
+        if not channels_to_delete:
+            await i.send("No valid channels found with those IDs.", ephemeral=True)
+            return
+
+        if not confirm:
+            response = f"**About to delete {len(channels_to_delete)} channels:**\n{channel_list}"
+            if not_found:
+                response += f"\n\n**Not found:** {', '.join(str(id) for id in not_found)}"
+            response += "\n\nRun with `confirm: true` to proceed."
+            await i.send(response, ephemeral=True)
+            return
+
+        deleted_count = 0
+        errors = []
+
+        for channel in channels_to_delete:
+            try:
+                channel_name = channel.name
+                await channel.delete(reason="Deleted via bot bulk delete command")
+                deleted_count += 1
+                logger.info(f"Deleted channel: {channel_name} (ID: {channel.id})")
+            except Exception as e:
+                errors.append(f"{channel.name}: {e}")
+                logger.error(f"Failed to delete channel {channel.name}: {e}")
+
+        response = f"Successfully deleted {deleted_count}/{len(channels_to_delete)} channels.\n"
+        if errors:
+            response += f"Errors: {len(errors)}\n"
+            for error in errors:
+                response += f"- {error}\n"
+        if not_found:
+            response += f"Not found: {', '.join(str(id) for id in not_found)}"
+
+        await i.send(response, ephemeral=True)
+
     @slash_command(name="overwrites", description="Lists the overwrites on a channel")
     @is_admin()
     async def overwrites(self, i: Interaction, id):
