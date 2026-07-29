@@ -393,8 +393,7 @@ class Management(commands.Cog):
         tracked_channels = DiscordChannel.objects.all()
         return {ch.id for ch in tracked_channels}
 
-    @slash_command(name="clean_deleted_channels", description="Removes channels from common model \
-                                                               that no longer exist in the server")
+    @slash_command(name="clean_deleted_channels", description="Removes channels from common model that no longer exist")
     @is_admin()
     async def clean_deleted_channels(self, i: Interaction, confirm: bool = False):
         await i.response.defer(ephemeral=True)
